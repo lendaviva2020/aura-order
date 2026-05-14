@@ -50,10 +50,14 @@ function MenuPage() {
   >("received");
 
   const lines = useCart((s) => s.lines);
-  const count = useCart((s) => s.count());
-  const subtotal = useCart((s) => s.subtotal());
   const add = useCart((s) => s.add);
   const clear = useCart((s) => s.clear);
+  const linesArr = useMemo(() => Object.values(lines), [lines]);
+  const count = useMemo(() => linesArr.reduce((a, l) => a + l.qty, 0), [linesArr]);
+  const subtotal = useMemo(
+    () => linesArr.reduce((a, l) => a + l.qty * l.item.price, 0),
+    [linesArr],
+  );
 
   const itemsByCat = useMemo(
     () => menu.filter((m) => m.category === activeCat),
@@ -245,10 +249,14 @@ function CartDrawer({
   onCheckout: () => void;
   table: string;
 }) {
-  const lines = useCart((s) => Object.values(s.lines));
+  const linesMap = useCart((s) => s.lines);
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
-  const subtotal = useCart((s) => s.subtotal());
+  const lines = useMemo(() => Object.values(linesMap), [linesMap]);
+  const subtotal = useMemo(
+    () => lines.reduce((a, l) => a + l.qty * l.item.price, 0),
+    [lines],
+  );
 
   return (
     <AnimatePresence>
