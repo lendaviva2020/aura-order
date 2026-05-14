@@ -249,10 +249,14 @@ function CartDrawer({
   onCheckout: () => void;
   table: string;
 }) {
-  const lines = useCart((s) => Object.values(s.lines));
+  const linesMap = useCart((s) => s.lines);
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
-  const subtotal = useCart((s) => s.subtotal());
+  const lines = useMemo(() => Object.values(linesMap), [linesMap]);
+  const subtotal = useMemo(
+    () => lines.reduce((a, l) => a + l.qty * l.item.price, 0),
+    [lines],
+  );
 
   return (
     <AnimatePresence>
