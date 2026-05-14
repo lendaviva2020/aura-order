@@ -116,7 +116,7 @@ function MenuPage() {
             </div>
           </div>
         </div>
-        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-5 pb-3 scrollbar-none">
+        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-5 pb-3">
           {categories.map((c) => (
             <button
               key={c.id}
