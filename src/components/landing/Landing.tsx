@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Flame, QrCode, ShoppingBag, Sparkles, Timer, Utensils } from "lucide-react";
+import { Flame, QrCode, ShoppingBag, Sparkles, Timer, Utensils, LogIn } from "lucide-react";
 import heroBurger from "@/assets/hero-burger.jpg";
 import productDouble from "@/assets/product-double.jpg";
 import productFries from "@/assets/product-fries.jpg";
@@ -34,18 +34,26 @@ function Nav() {
           <span className="font-display text-2xl tracking-wider">EMBER</span>
         </Link>
         <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
-          <a href="#how" className="hover:text-foreground transition">How it works</a>
-          <a href="#menu" className="hover:text-foreground transition">Menu</a>
-          <a href="#loyalty" className="hover:text-foreground transition">Rewards</a>
-          <a href="#contact" className="hover:text-foreground transition">Contact</a>
+          <a href="#how" className="hover:text-foreground transition">Como funciona</a>
+          <a href="#menu" className="hover:text-foreground transition">Cardápio</a>
+          <a href="#loyalty" className="hover:text-foreground transition">Recompensas</a>
+          <a href="#contact" className="hover:text-foreground transition">Contato</a>
         </nav>
-        <Link
-          to="/menu"
-          search={{ table: "12" }}
-          className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:scale-[1.03] shadow-ember"
-        >
-          Try Demo
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/auth"
+            className="hidden items-center gap-1.5 rounded-full border border-border bg-charcoal/60 px-4 py-2 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-charcoal sm:inline-flex"
+          >
+            <LogIn className="h-4 w-4" /> Entrar
+          </Link>
+          <Link
+            to="/menu"
+            search={{ table: "12" }}
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:scale-[1.03] shadow-ember"
+          >
+            Testar demo
+          </Link>
+        </div>
       </div>
     </header>
   );
@@ -71,16 +79,16 @@ function Hero() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-charcoal/60 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground backdrop-blur">
             <Sparkles className="h-3.5 w-3.5 text-ember" />
-            Autonomous Ordering Platform
+            Plataforma de pedidos autônoma
           </div>
           <h1 className="mt-6 font-display text-5xl leading-[0.95] sm:text-6xl md:text-7xl lg:text-8xl">
-            SCAN.<br />
-            ORDER.<br />
-            <span className="text-gradient-ember">EAT FASTER.</span>
+            ESCANEIE.<br />
+            PEÇA.<br />
+            <span className="text-gradient-ember">COMA NA HORA.</span>
           </h1>
           <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-            One QR code per table. Customers order &amp; pay from their phone — your team
-            only cooks and delivers. Zero queues, zero friction.
+            Um QR Code por mesa. O cliente pede e paga pelo celular — sua equipe só
+            cozinha e entrega. Zero filas, zero atrito.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -89,21 +97,21 @@ function Hero() {
               className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-ember transition hover:scale-[1.03]"
             >
               <QrCode className="h-5 w-5" />
-              Start ordering
+              Começar pedido
             </Link>
             <a
               href="#how"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-charcoal/40 px-7 py-3.5 text-base font-semibold text-foreground backdrop-blur transition hover:bg-charcoal"
             >
-              See how it works
+              Ver como funciona
             </a>
           </div>
           <div className="mt-10 flex items-center gap-6 text-xs text-muted-foreground">
-            <Stat label="Avg order time" value="42s" />
+            <Stat label="Tempo médio" value="42s" />
             <div className="h-8 w-px bg-border" />
-            <Stat label="Table turnover" value="+38%" />
+            <Stat label="Giro de mesas" value="+38%" />
             <div className="h-8 w-px bg-border" />
-            <Stat label="Staff savings" value="2.4x" />
+            <Stat label="Economia" value="2,4x" />
           </div>
         </motion.div>
 
@@ -116,29 +124,23 @@ function Hero() {
           <div className="absolute -inset-10 rounded-full bg-ember/30 blur-3xl animate-ember-pulse" />
           <img
             src={heroBurger}
-            alt="Signature Ember Classic burger"
+            alt="Hambúrguer Ember Classic"
             width={1536}
             height={1536}
             className="relative w-full rounded-3xl object-cover shadow-soft"
           />
-          <FloatingCard
-            className="absolute -left-4 top-12 hidden md:flex"
-            delay={0.6}
-          >
+          <FloatingCard className="absolute -left-4 top-12 hidden md:flex" delay={0.6}>
             <Timer className="h-5 w-5 text-ember" />
             <div>
-              <div className="text-xs text-muted-foreground">Ready in</div>
-              <div className="font-semibold">8 minutes</div>
+              <div className="text-xs text-muted-foreground">Pronto em</div>
+              <div className="font-semibold">8 minutos</div>
             </div>
           </FloatingCard>
-          <FloatingCard
-            className="absolute -right-4 bottom-12 hidden md:flex"
-            delay={0.9}
-          >
+          <FloatingCard className="absolute -right-4 bottom-12 hidden md:flex" delay={0.9}>
             <ShoppingBag className="h-5 w-5 text-ember" />
             <div>
-              <div className="text-xs text-muted-foreground">Table 12 · Order</div>
-              <div className="font-semibold">Paid · $24.40</div>
+              <div className="text-xs text-muted-foreground">Mesa 12 · Pedido</div>
+              <div className="font-semibold">Pago · R$ 124,40</div>
             </div>
           </FloatingCard>
         </motion.div>
@@ -178,7 +180,7 @@ function FloatingCard({
 }
 
 function Marquee() {
-  const items = ["BURGERS", "SNACK BARS", "CAFETERIAS", "PUBS", "FAST FOOD", "FOOD TRUCKS"];
+  const items = ["HAMBURGUERIAS", "LANCHONETES", "CAFETERIAS", "PUBS", "FAST FOOD", "FOOD TRUCKS"];
   return (
     <div className="border-y border-border bg-charcoal/30 py-6">
       <div className="flex animate-[marquee_30s_linear_infinite] gap-12 whitespace-nowrap">
@@ -195,15 +197,15 @@ function Marquee() {
 
 function HowItWorks() {
   const steps = [
-    { icon: QrCode, title: "Scan the QR", body: "Customer scans the QR taped to the table — session opens instantly, no app required." },
-    { icon: Utensils, title: "Build the order", body: "Browse the digital menu, customize items, add notes — all from their phone." },
-    { icon: Flame, title: "Cook & deliver", body: "Your kitchen sees the ticket in real time. Food goes straight to the right table." },
+    { icon: QrCode, title: "Escaneie o QR", body: "O cliente lê o QR Code da mesa — a sessão abre na hora, sem instalar app." },
+    { icon: Utensils, title: "Monte o pedido", body: "Cardápio digital, customizações e observações — tudo do celular." },
+    { icon: Flame, title: "Cozinhe e entregue", body: "Sua cozinha vê o pedido em tempo real e entrega direto na mesa certa." },
   ];
   return (
     <section id="how" className="relative mx-auto max-w-7xl px-6 py-28">
       <div className="mb-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-ember">Workflow</p>
-        <h2 className="mt-3 font-display text-5xl md:text-6xl">Three steps. Zero queue.</h2>
+        <p className="text-xs uppercase tracking-[0.3em] text-ember">Fluxo</p>
+        <h2 className="mt-3 font-display text-5xl md:text-6xl">Três passos. Zero fila.</h2>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         {steps.map((s, i) => (
@@ -233,24 +235,24 @@ function HowItWorks() {
 
 function Showcase() {
   const items = [
-    { img: productDouble, name: "Double Stack", price: "$15.90" },
-    { img: heroBurger, name: "Ember Classic", price: "$12.50" },
-    { img: productFries, name: "Ember Fries", price: "$5.50" },
-    { img: productShake, name: "Inferno Shake", price: "$6.90" },
+    { img: productDouble, name: "Double Stack", price: "R$ 39,90" },
+    { img: heroBurger, name: "Ember Classic", price: "R$ 32,50" },
+    { img: productFries, name: "Fritas Ember", price: "R$ 18,50" },
+    { img: productShake, name: "Inferno Shake", price: "R$ 22,90" },
   ];
   return (
     <section id="menu" className="relative mx-auto max-w-7xl px-6 py-28">
       <div className="mb-16 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-ember">The Menu</p>
-          <h2 className="mt-3 font-display text-5xl md:text-6xl">Hand-built. Fire-cooked.</h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-ember">O Cardápio</p>
+          <h2 className="mt-3 font-display text-5xl md:text-6xl">Feito à mão. No fogo.</h2>
         </div>
         <Link
           to="/menu"
           search={{ table: "12" }}
           className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-semibold hover:bg-charcoal"
         >
-          See full menu →
+          Ver cardápio completo →
         </Link>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -274,7 +276,7 @@ function Showcase() {
             <div className="flex items-center justify-between p-5">
               <div>
                 <div className="font-display text-xl">{it.name}</div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">Add to order</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">Adicionar</div>
               </div>
               <div className="font-display text-2xl text-ember">{it.price}</div>
             </div>
@@ -290,10 +292,10 @@ function Stats() {
     <section className="border-y border-border bg-charcoal/30 py-20">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-6 md:grid-cols-4">
         {[
-          ["1.2M", "Orders processed"],
-          ["480+", "Restaurants live"],
-          ["42s", "Avg time-to-order"],
-          ["4.9★", "Customer rating"],
+          ["1,2M", "Pedidos processados"],
+          ["480+", "Restaurantes ativos"],
+          ["42s", "Tempo até pedir"],
+          ["4,9★", "Avaliação dos clientes"],
         ].map(([v, l]) => (
           <div key={l} className="text-center">
             <div className="font-display text-5xl text-gradient-ember md:text-6xl">{v}</div>
@@ -310,14 +312,14 @@ function Loyalty() {
     <section id="loyalty" className="relative mx-auto max-w-7xl px-6 py-28">
       <div className="grid items-center gap-12 md:grid-cols-2">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-ember">Rewards</p>
-          <h2 className="mt-3 font-display text-5xl md:text-6xl">Every bite earns sparks.</h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-ember">Recompensas</p>
+          <h2 className="mt-3 font-display text-5xl md:text-6xl">Cada mordida vira faísca.</h2>
           <p className="mt-5 max-w-lg text-muted-foreground">
-            Built-in loyalty layer. Points on every order, cashback wallet, VIP tiers, birthday
-            rewards and referral bonuses — automated end-to-end.
+            Programa de fidelidade nativo. Pontos por pedido, carteira de cashback,
+            níveis VIP, recompensas de aniversário e bônus por indicação — tudo automático.
           </p>
           <div className="mt-8 grid grid-cols-3 gap-4">
-            {[["Bronze", "5%"], ["Silver", "8%"], ["Ember", "12%"]].map(([t, c]) => (
+            {[["Bronze", "5%"], ["Prata", "8%"], ["Ember", "12%"]].map(([t, c]) => (
               <div key={t} className="rounded-2xl border border-border bg-charcoal/50 p-5 text-center">
                 <div className="font-display text-2xl">{t}</div>
                 <div className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">cashback</div>
@@ -330,26 +332,26 @@ function Loyalty() {
           <div className="absolute inset-0 rounded-3xl bg-ember/10 blur-3xl" />
           <div className="relative rounded-3xl border border-border bg-gradient-to-br from-charcoal to-background p-8 shadow-soft">
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Wallet</div>
+              <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Carteira</div>
               <Flame className="h-5 w-5 text-ember" />
             </div>
-            <div className="mt-6 font-display text-6xl text-gradient-ember">2,480</div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">sparks available</div>
+            <div className="mt-6 font-display text-6xl text-gradient-ember">2.480</div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">faíscas disponíveis</div>
             <div className="mt-8 h-2 overflow-hidden rounded-full bg-secondary">
               <div className="h-full w-3/4 rounded-full bg-ember" />
             </div>
             <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>Silver</span>
-              <span>520 to Ember</span>
+              <span>Prata</span>
+              <span>520 para Ember</span>
             </div>
             <div className="mt-8 grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border p-4">
-                <div className="text-xs text-muted-foreground">Free shake</div>
-                <div className="mt-1 font-display text-xl">800 sp</div>
+                <div className="text-xs text-muted-foreground">Shake grátis</div>
+                <div className="mt-1 font-display text-xl">800 fa</div>
               </div>
               <div className="rounded-xl border border-border p-4">
-                <div className="text-xs text-muted-foreground">Combo upgrade</div>
-                <div className="mt-1 font-display text-xl">1500 sp</div>
+                <div className="text-xs text-muted-foreground">Upgrade combo</div>
+                <div className="mt-1 font-display text-xl">1.500 fa</div>
               </div>
             </div>
           </div>
@@ -361,23 +363,14 @@ function Loyalty() {
 
 function Testimonials() {
   const quotes = [
-    {
-      q: "We turn 38% more tables on a Friday night. Staff just cooks now.",
-      a: "Marco — Owner, Smashlab Burgers",
-    },
-    {
-      q: "Customers love it. Average ticket is up $4.20 thanks to AI upsells.",
-      a: "Lina — GM, Coast Snack Bar",
-    },
-    {
-      q: "Setup took one afternoon. Honestly the best ops decision this year.",
-      a: "Jay — Founder, Pier 9 Pub",
-    },
+    { q: "Giramos 38% mais mesas numa sexta. A equipe só cozinha agora.", a: "Marco — Dono, Smashlab Burgers" },
+    { q: "Os clientes amam. Ticket médio subiu R$ 14 com upsell por IA.", a: "Lina — Gerente, Coast Lanchonete" },
+    { q: "Configurei numa tarde. Melhor decisão operacional do ano.", a: "Jay — Fundador, Pier 9 Pub" },
   ];
   return (
     <section className="mx-auto max-w-7xl px-6 py-28">
-      <p className="text-xs uppercase tracking-[0.3em] text-ember text-center">Loved by operators</p>
-      <h2 className="mt-3 text-center font-display text-5xl md:text-6xl">Real kitchens. Real numbers.</h2>
+      <p className="text-xs uppercase tracking-[0.3em] text-ember text-center">Amado pelos operadores</p>
+      <h2 className="mt-3 text-center font-display text-5xl md:text-6xl">Cozinhas reais. Números reais.</h2>
       <div className="mt-16 grid gap-6 md:grid-cols-3">
         {quotes.map((q) => (
           <div key={q.a} className="rounded-3xl border border-border bg-charcoal/50 p-8">
@@ -398,10 +391,10 @@ function CTA() {
         <div className="absolute inset-0 bg-ember-radial" />
         <div className="relative text-center">
           <h2 className="font-display text-5xl md:text-7xl">
-            Light up your <span className="text-gradient-ember">restaurant.</span>
+            Acenda seu <span className="text-gradient-ember">restaurante.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            Try the live customer flow right now — no signup, no install.
+            Teste o fluxo do cliente agora — sem cadastro, sem instalar nada.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
@@ -410,13 +403,13 @@ function CTA() {
               className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-ember transition hover:scale-[1.03]"
             >
               <QrCode className="h-5 w-5" />
-              Open table 12 demo
+              Abrir demo da mesa 12
             </Link>
             <a
               href="https://wa.me/15555555555"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-charcoal/60 px-8 py-4 text-base font-semibold backdrop-blur transition hover:bg-charcoal"
             >
-              Talk on WhatsApp
+              Falar no WhatsApp
             </a>
           </div>
         </div>
@@ -435,9 +428,9 @@ function Footer() {
           <span>© {new Date().getFullYear()}</span>
         </div>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-foreground">Privacy</a>
-          <a href="#" className="hover:text-foreground">Terms</a>
-          <a href="#contact" className="hover:text-foreground">Contact</a>
+          <a href="#" className="hover:text-foreground">Privacidade</a>
+          <a href="#" className="hover:text-foreground">Termos</a>
+          <a href="#contact" className="hover:text-foreground">Contato</a>
         </div>
       </div>
     </footer>
