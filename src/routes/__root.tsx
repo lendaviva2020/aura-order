@@ -62,16 +62,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ember — Autonomous Ordering for Restaurants" },
+      { title: "Ember — Pedidos autônomos para restaurantes" },
       {
         name: "description",
         content:
-          "Scan, order, pay. Ember is the autonomous in-restaurant ordering platform for burger joints, snack bars and fast-food brands.",
+          "Escaneie, peça, pague. A Ember é a plataforma de pedidos autônoma para hamburguerias, lanchonetes e fast-food.",
       },
-      { property: "og:title", content: "Ember — Autonomous Restaurant Ordering" },
+      { property: "og:title", content: "Ember — Pedidos autônomos para restaurantes" },
       {
         property: "og:description",
-        content: "Scan a QR. Skip the line. Eat faster. The autonomous ordering platform.",
+        content: "Escaneie um QR. Pule a fila. Coma mais rápido.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
