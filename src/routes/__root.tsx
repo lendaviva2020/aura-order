@@ -75,6 +75,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Ember — Pedidos autônomos para restaurantes" },
+      { name: "description", content: "Aura Order is a complete autonomous restaurant platform enabling seamless customer ordering and efficient kitchen operations." },
+      { property: "og:description", content: "Aura Order is a complete autonomous restaurant platform enabling seamless customer ordering and efficient kitchen operations." },
+      { name: "twitter:description", content: "Aura Order is a complete autonomous restaurant platform enabling seamless customer ordering and efficient kitchen operations." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/faedcb64-795e-42a8-a682-c7caa5ee236d/id-preview-23e9a620--500218d8-bce0-4b1b-bf53-96bff08623ca.lovable.app-1778810323231.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/faedcb64-795e-42a8-a682-c7caa5ee236d/id-preview-23e9a620--500218d8-bce0-4b1b-bf53-96bff08623ca.lovable.app-1778810323231.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
