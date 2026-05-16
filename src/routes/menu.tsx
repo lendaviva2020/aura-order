@@ -415,9 +415,9 @@ function CheckoutSheet({
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Table {table} · Checkout
+              Mesa {table} · Pagamento
             </div>
-            <h3 className="font-display text-2xl">Pay & confirm</h3>
+            <h3 className="font-display text-2xl">Pague e confirme</h3>
           </div>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-charcoal">
             <X className="h-5 w-5" />
@@ -427,7 +427,7 @@ function CheckoutSheet({
         <div className="space-y-5 px-6 py-5">
           <section>
             <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Order summary
+              Resumo do pedido
             </h4>
             <div className="space-y-2 rounded-2xl border border-border bg-charcoal/50 p-4">
               {lines.map((l) => (
@@ -435,13 +435,13 @@ function CheckoutSheet({
                   <span>
                     <span className="font-bold text-ember">{l.qty}×</span> {l.item.name}
                   </span>
-                  <span>${(l.item.price * l.qty).toFixed(2)}</span>
+                  <span>R$ {(l.item.price * l.qty).toFixed(2)}</span>
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
-              <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
-              <Row label="Total" value={`$${total.toFixed(2)}`} bold />
+              <Row label="Subtotal" value={`R$ ${subtotal.toFixed(2)}`} />
+              <Row label="Taxa de serviço (10%)" value={`R$ ${tax.toFixed(2)}`} />
+              <Row label="Total" value={`R$ ${total.toFixed(2)}`} bold />
             </div>
           </section>
 
