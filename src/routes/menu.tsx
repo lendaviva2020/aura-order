@@ -385,7 +385,7 @@ function CheckoutSheet({
 }) {
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
-  const tax = subtotal * 0.08;
+  const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
   function pay() {
