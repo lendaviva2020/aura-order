@@ -28,10 +28,10 @@ export const Route = createFileRoute("/menu")({
   component: MenuPage,
   head: () => ({
     meta: [
-      { title: "Order — Ember" },
+      { title: "Pedido — Ember" },
       {
         name: "description",
-        content: "Build your order and pay from the table. Powered by Ember.",
+        content: "Monte seu pedido e pague direto da mesa. Powered by Ember.",
       },
     ],
   }),
