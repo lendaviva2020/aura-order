@@ -66,7 +66,7 @@ function MenuPage() {
 
   function handleAdd(item: MenuItem) {
     add(item);
-    toast.success(`${item.name} added`, { duration: 1400 });
+    toast.success(`${item.name} adicionado`, { duration: 1400 });
   }
 
   function placeOrder() {
