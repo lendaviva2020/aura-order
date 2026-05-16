@@ -312,13 +312,13 @@ function CartDrawer({
                           <button
                             onClick={() => remove(l.item.id)}
                             className="text-muted-foreground hover:text-destructive"
-                            aria-label="Remove"
+                            aria-label="Remover"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          ${l.item.price.toFixed(2)} each
+                          R$ {l.item.price.toFixed(2)} cada
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
