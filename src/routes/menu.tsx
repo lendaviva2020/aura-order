@@ -447,7 +447,7 @@ function CheckoutSheet({
 
           <section>
             <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Payment
+              Pagamento
             </h4>
             <div className="grid grid-cols-3 gap-2">
               {(["card", "applepay", "pix"] as const).map((m) => (
@@ -460,7 +460,7 @@ function CheckoutSheet({
                       : "border-border bg-charcoal/50 text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {m === "applepay" ? "Apple Pay" : m === "pix" ? "PIX" : "Card"}
+                  {m === "applepay" ? "Apple Pay" : m === "pix" ? "PIX" : "Cartão"}
                 </button>
               ))}
             </div>
@@ -471,10 +471,10 @@ function CheckoutSheet({
             onClick={pay}
             className="mt-2 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01] disabled:opacity-60"
           >
-            {paying ? "Processing…" : `Pay $${total.toFixed(2)}`}
+            {paying ? "Processando…" : `Pagar R$ ${total.toFixed(2)}`}
           </button>
           <p className="text-center text-xs text-muted-foreground">
-            Demo payment · no real charge
+            Pagamento demonstrativo · sem cobrança real
           </p>
         </div>
       </motion.div>
