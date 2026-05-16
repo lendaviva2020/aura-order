@@ -28,10 +28,10 @@ export const Route = createFileRoute("/menu")({
   component: MenuPage,
   head: () => ({
     meta: [
-      { title: "Order — Ember" },
+      { title: "Pedido — Ember" },
       {
         name: "description",
-        content: "Build your order and pay from the table. Powered by Ember.",
+        content: "Monte seu pedido e pague direto da mesa. Powered by Ember.",
       },
     ],
   }),
@@ -66,7 +66,7 @@ function MenuPage() {
 
   function handleAdd(item: MenuItem) {
     add(item);
-    toast.success(`${item.name} added`, { duration: 1400 });
+    toast.success(`${item.name} adicionado`, { duration: 1400 });
   }
 
   function placeOrder() {
@@ -106,7 +106,7 @@ function MenuPage() {
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Voltar
           </Link>
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-ember">
@@ -114,7 +114,7 @@ function MenuPage() {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground leading-none">
-                Table
+                Mesa
               </div>
               <div className="font-display text-lg leading-tight">{table}</div>
             </div>
@@ -166,7 +166,7 @@ function MenuPage() {
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-display text-xl leading-tight">{item.name}</h3>
                     <div className="font-display text-xl text-ember">
-                      ${item.price.toFixed(2)}
+                      R$ {item.price.toFixed(2)}
                     </div>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -183,7 +183,7 @@ function MenuPage() {
                       onClick={() => handleAdd(item)}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
                     >
-                      <Plus className="h-3.5 w-3.5" /> Add
+                      <Plus className="h-3.5 w-3.5" /> Adicionar
                     </button>
                   </div>
                 </div>
@@ -209,9 +209,9 @@ function MenuPage() {
                   {count}
                 </span>
               </div>
-              <span className="font-bold uppercase tracking-wider">View cart</span>
+              <span className="font-bold uppercase tracking-wider">Ver carrinho</span>
             </div>
-            <span className="font-display text-xl">${subtotal.toFixed(2)}</span>
+            <span className="font-display text-xl">R$ {subtotal.toFixed(2)}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -279,21 +279,21 @@ function CartDrawer({
             <div className="flex items-center justify-between border-b border-border px-6 py-5">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  Table {table}
+                  Mesa {table}
                 </div>
-                <h3 className="font-display text-2xl">Your Order</h3>
+                <h3 className="font-display text-2xl">Seu pedido</h3>
               </div>
               <button
                 onClick={onClose}
                 className="rounded-full p-2 hover:bg-charcoal"
-                aria-label="Close cart"
+                aria-label="Fechar carrinho"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="max-h-[50vh] overflow-y-auto px-6 py-4">
               {lines.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">Cart is empty.</p>
+                <p className="py-8 text-center text-muted-foreground">Carrinho vazio.</p>
               ) : (
                 <ul className="space-y-3">
                   {lines.map((l) => (
@@ -312,13 +312,13 @@ function CartDrawer({
                           <button
                             onClick={() => remove(l.item.id)}
                             className="text-muted-foreground hover:text-destructive"
-                            aria-label="Remove"
+                            aria-label="Remover"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          ${l.item.price.toFixed(2)} each
+                          R$ {l.item.price.toFixed(2)} cada
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
@@ -337,7 +337,7 @@ function CartDrawer({
                             </button>
                           </div>
                           <div className="font-display text-lg text-ember">
-                            ${(l.item.price * l.qty).toFixed(2)}
+                            R$ {(l.item.price * l.qty).toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -352,7 +352,7 @@ function CartDrawer({
                   Subtotal
                 </span>
                 <span className="font-display text-3xl text-gradient-ember">
-                  ${subtotal.toFixed(2)}
+                  R$ {subtotal.toFixed(2)}
                 </span>
               </div>
               <button
@@ -360,7 +360,7 @@ function CartDrawer({
                 onClick={onCheckout}
                 className="w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Checkout
+                Finalizar pedido
               </button>
             </div>
           </motion.div>
@@ -383,9 +383,9 @@ function CheckoutSheet({
   onClose: () => void;
   onConfirm: () => void;
 }) {
-  const [method, setMethod] = useState<"card" | "applepay" | "pix">("card");
+  const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
-  const tax = subtotal * 0.08;
+  const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
   function pay() {
@@ -415,9 +415,9 @@ function CheckoutSheet({
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Table {table} · Checkout
+              Mesa {table} · Pagamento
             </div>
-            <h3 className="font-display text-2xl">Pay & confirm</h3>
+            <h3 className="font-display text-2xl">Pague e confirme</h3>
           </div>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-charcoal">
             <X className="h-5 w-5" />
@@ -427,7 +427,7 @@ function CheckoutSheet({
         <div className="space-y-5 px-6 py-5">
           <section>
             <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Order summary
+              Resumo do pedido
             </h4>
             <div className="space-y-2 rounded-2xl border border-border bg-charcoal/50 p-4">
               {lines.map((l) => (
@@ -435,19 +435,19 @@ function CheckoutSheet({
                   <span>
                     <span className="font-bold text-ember">{l.qty}×</span> {l.item.name}
                   </span>
-                  <span>${(l.item.price * l.qty).toFixed(2)}</span>
+                  <span>R$ {(l.item.price * l.qty).toFixed(2)}</span>
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
-              <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-              <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
-              <Row label="Total" value={`$${total.toFixed(2)}`} bold />
+              <Row label="Subtotal" value={`R$ ${subtotal.toFixed(2)}`} />
+              <Row label="Taxa de serviço (10%)" value={`R$ ${tax.toFixed(2)}`} />
+              <Row label="Total" value={`R$ ${total.toFixed(2)}`} bold />
             </div>
           </section>
 
           <section>
             <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Payment
+              Pagamento
             </h4>
             <div className="grid grid-cols-3 gap-2">
               {(["card", "applepay", "pix"] as const).map((m) => (
@@ -460,7 +460,7 @@ function CheckoutSheet({
                       : "border-border bg-charcoal/50 text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {m === "applepay" ? "Apple Pay" : m === "pix" ? "PIX" : "Card"}
+                  {m === "applepay" ? "Apple Pay" : m === "pix" ? "PIX" : "Cartão"}
                 </button>
               ))}
             </div>
@@ -471,10 +471,10 @@ function CheckoutSheet({
             onClick={pay}
             className="mt-2 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01] disabled:opacity-60"
           >
-            {paying ? "Processing…" : `Pay $${total.toFixed(2)}`}
+            {paying ? "Processando…" : `Pagar R$ ${total.toFixed(2)}`}
           </button>
           <p className="text-center text-xs text-muted-foreground">
-            Demo payment · no real charge
+            Pagamento demonstrativo · sem cobrança real
           </p>
         </div>
       </motion.div>
@@ -496,11 +496,11 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 }
 
 const STAGES = [
-  { id: "received", label: "Received", icon: CheckCircle2 },
-  { id: "preparing", label: "Preparing", icon: ChefHat },
-  { id: "ready", label: "Ready", icon: Flame },
-  { id: "delivering", label: "Delivering", icon: Utensils },
-  { id: "completed", label: "Done", icon: CheckCircle2 },
+  { id: "received", label: "Recebido", icon: CheckCircle2 },
+  { id: "preparing", label: "Preparando", icon: ChefHat },
+  { id: "ready", label: "Pronto", icon: Flame },
+  { id: "delivering", label: "A caminho", icon: Utensils },
+  { id: "completed", label: "Entregue", icon: CheckCircle2 },
 ] as const;
 
 function OrderTracking({
@@ -524,11 +524,11 @@ function OrderTracking({
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Home
+            Início
           </Link>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Order
+              Pedido
             </div>
             <div className="font-display text-lg">{orderId}</div>
           </div>
@@ -547,11 +547,11 @@ function OrderTracking({
         </motion.div>
 
         <h1 className="mt-8 text-center font-display text-5xl">
-          {status === "completed" ? "Enjoy!" : "Order placed"}
+          {status === "completed" ? "Bom apetite!" : "Pedido enviado"}
         </h1>
         <p className="mt-2 text-center text-muted-foreground">
-          Table <span className="font-bold text-foreground">{table}</span> · we'll bring it
-          straight to you.
+          Mesa <span className="font-bold text-foreground">{table}</span> · levamos direto até
+          você.
         </p>
 
         <div className="mt-12 rounded-3xl border border-border bg-charcoal/40 p-6">
@@ -583,7 +583,7 @@ function OrderTracking({
                     </div>
                   </div>
                   {active && (
-                    <span className="text-xs uppercase tracking-widest text-ember">Now</span>
+                    <span className="text-xs uppercase tracking-widest text-ember">Agora</span>
                   )}
                 </div>
               );
@@ -596,7 +596,7 @@ function OrderTracking({
             onClick={onNew}
             className="mt-8 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01]"
           >
-            Order again
+            Fazer novo pedido
           </button>
         )}
       </main>
