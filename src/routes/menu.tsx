@@ -106,7 +106,7 @@ function MenuPage() {
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Voltar
           </Link>
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-ember">
@@ -114,7 +114,7 @@ function MenuPage() {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground leading-none">
-                Table
+                Mesa
               </div>
               <div className="font-display text-lg leading-tight">{table}</div>
             </div>
