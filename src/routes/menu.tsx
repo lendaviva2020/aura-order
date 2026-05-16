@@ -524,11 +524,11 @@ function OrderTracking({
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Home
+            Início
           </Link>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Order
+              Pedido
             </div>
             <div className="font-display text-lg">{orderId}</div>
           </div>
@@ -547,11 +547,11 @@ function OrderTracking({
         </motion.div>
 
         <h1 className="mt-8 text-center font-display text-5xl">
-          {status === "completed" ? "Enjoy!" : "Order placed"}
+          {status === "completed" ? "Bom apetite!" : "Pedido enviado"}
         </h1>
         <p className="mt-2 text-center text-muted-foreground">
-          Table <span className="font-bold text-foreground">{table}</span> · we'll bring it
-          straight to you.
+          Mesa <span className="font-bold text-foreground">{table}</span> · levamos direto até
+          você.
         </p>
 
         <div className="mt-12 rounded-3xl border border-border bg-charcoal/40 p-6">
@@ -583,7 +583,7 @@ function OrderTracking({
                     </div>
                   </div>
                   {active && (
-                    <span className="text-xs uppercase tracking-widest text-ember">Now</span>
+                    <span className="text-xs uppercase tracking-widest text-ember">Agora</span>
                   )}
                 </div>
               );
@@ -596,7 +596,7 @@ function OrderTracking({
             onClick={onNew}
             className="mt-8 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01]"
           >
-            Order again
+            Fazer novo pedido
           </button>
         )}
       </main>
