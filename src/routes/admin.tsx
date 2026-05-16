@@ -349,7 +349,8 @@ function OrdersTab() {
     };
   }, [qc]);
 
-  async function setStatus(id: string, status: Product extends never ? never : "received" | "preparing" | "ready" | "delivering" | "completed" | "cancelled") {
+  type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "completed" | "cancelled";
+  async function setStatus(id: string, status: OrderStatus) {
     const patch = status === "completed"
       ? { status, completed_at: new Date().toISOString() }
       : { status };
