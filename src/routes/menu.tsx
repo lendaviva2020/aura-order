@@ -337,7 +337,7 @@ function CartDrawer({
                             </button>
                           </div>
                           <div className="font-display text-lg text-ember">
-                            ${(l.item.price * l.qty).toFixed(2)}
+                            R$ {(l.item.price * l.qty).toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -352,7 +352,7 @@ function CartDrawer({
                   Subtotal
                 </span>
                 <span className="font-display text-3xl text-gradient-ember">
-                  ${subtotal.toFixed(2)}
+                  R$ {subtotal.toFixed(2)}
                 </span>
               </div>
               <button
@@ -360,7 +360,7 @@ function CartDrawer({
                 onClick={onCheckout}
                 className="w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Checkout
+                Finalizar pedido
               </button>
             </div>
           </motion.div>
