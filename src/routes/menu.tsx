@@ -166,7 +166,7 @@ function MenuPage() {
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-display text-xl leading-tight">{item.name}</h3>
                     <div className="font-display text-xl text-ember">
-                      ${item.price.toFixed(2)}
+                      R$ {item.price.toFixed(2)}
                     </div>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
