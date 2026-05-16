@@ -279,21 +279,21 @@ function CartDrawer({
             <div className="flex items-center justify-between border-b border-border px-6 py-5">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  Table {table}
+                  Mesa {table}
                 </div>
-                <h3 className="font-display text-2xl">Your Order</h3>
+                <h3 className="font-display text-2xl">Seu pedido</h3>
               </div>
               <button
                 onClick={onClose}
                 className="rounded-full p-2 hover:bg-charcoal"
-                aria-label="Close cart"
+                aria-label="Fechar carrinho"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="max-h-[50vh] overflow-y-auto px-6 py-4">
               {lines.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">Cart is empty.</p>
+                <p className="py-8 text-center text-muted-foreground">Carrinho vazio.</p>
               ) : (
                 <ul className="space-y-3">
                   {lines.map((l) => (
