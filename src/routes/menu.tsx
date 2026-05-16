@@ -496,11 +496,11 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 }
 
 const STAGES = [
-  { id: "received", label: "Received", icon: CheckCircle2 },
-  { id: "preparing", label: "Preparing", icon: ChefHat },
-  { id: "ready", label: "Ready", icon: Flame },
-  { id: "delivering", label: "Delivering", icon: Utensils },
-  { id: "completed", label: "Done", icon: CheckCircle2 },
+  { id: "received", label: "Recebido", icon: CheckCircle2 },
+  { id: "preparing", label: "Preparando", icon: ChefHat },
+  { id: "ready", label: "Pronto", icon: Flame },
+  { id: "delivering", label: "A caminho", icon: Utensils },
+  { id: "completed", label: "Entregue", icon: CheckCircle2 },
 ] as const;
 
 function OrderTracking({
