@@ -209,9 +209,9 @@ function MenuPage() {
                   {count}
                 </span>
               </div>
-              <span className="font-bold uppercase tracking-wider">View cart</span>
+              <span className="font-bold uppercase tracking-wider">Ver carrinho</span>
             </div>
-            <span className="font-display text-xl">${subtotal.toFixed(2)}</span>
+            <span className="font-display text-xl">R$ {subtotal.toFixed(2)}</span>
           </motion.button>
         )}
       </AnimatePresence>
