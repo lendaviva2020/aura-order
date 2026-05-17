@@ -60,7 +60,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bem-vindo de volta!");
-        navigate({ to: redirect ?? "/" });
+        navigate({ to: redirect ?? "/dashboard" });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
