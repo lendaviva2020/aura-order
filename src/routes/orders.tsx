@@ -107,6 +107,13 @@ function OrdersHistoryPage() {
     if (!authLoading && !user) navigate({ to: "/auth", search: { redirect: "/orders" } });
   }, [authLoading, user, navigate]);
 
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window !== "undefined") {
+      return parseInt(localStorage.getItem("orders_page_size") || "10");
+    }
+    return 10;
+  });
+
   const {
     data,
     fetchNextPage,
@@ -116,7 +123,6 @@ function OrdersHistoryPage() {
   } = useInfiniteQuery({
     queryKey: ["all-user-orders", user?.id],
     queryFn: async ({ pageParam = 0 }) => {
-      const pageSize = 10;
       const { data, error } = await supabase
         .from("orders")
         .select("*, order_items(*), tables(number)")
@@ -129,11 +135,18 @@ function OrdersHistoryPage() {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any[], allPages: any[]) => {
-      if (lastPage.length < 10) return undefined;
-      return allPages.length * 10;
+      if (lastPage.length < pageSize) return undefined;
+      return allPages.length * pageSize;
     },
     enabled: !!user,
   });
+
+  useEffect(() => {
+    if (data?.pages) {
+      const totalLoaded = data.pages.flat().length;
+      localStorage.setItem("orders_page_size", String(Math.max(10, totalLoaded)));
+    }
+  }, [data]);
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
