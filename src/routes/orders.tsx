@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -80,18 +80,35 @@ function OrdersHistoryPage() {
     if (!authLoading && !user) navigate({ to: "/auth", search: { redirect: "/orders" } });
   }, [authLoading, user, navigate]);
 
-  const { data: orders, isLoading } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
     queryKey: ["all-user-orders", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
+    queryFn: async ({ pageParam = 0 }) => {
+      const pageSize = 10;
+      const { data, error } = await supabase
         .from("orders")
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
-        .order("placed_at", { ascending: false });
-      return data ?? [];
+        .order("placed_at", { ascending: false })
+        .range(pageParam as number, (pageParam as number) + pageSize - 1);
+      
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: any[], allPages: any[]) => {
+      if (lastPage.length < 10) return undefined;
+      return allPages.length * 10;
     },
     enabled: !!user,
   });
+
+  const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   // Realtime updates for order status changes and new orders
   useEffect(() => {
@@ -156,9 +173,9 @@ function OrdersHistoryPage() {
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    let result = filter === "all" ? [...orders] : orders.filter(o => o.status === filter);
+    let result = filter === "all" ? [...orders] : orders.filter((o: any) => o.status === filter);
     
-    result.sort((a, b) => {
+    result.sort((a: any, b: any) => {
       if (sortBy === "date") {
         const timeA = new Date(a.placed_at).getTime();
         const timeB = new Date(b.placed_at).getTime();
@@ -260,9 +277,21 @@ function OrdersHistoryPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredOrders?.map(order => (
+            {filteredOrders?.map((order: any) => (
               <DetailedOrderCard key={order.id} order={order} />
             ))}
+          </div>
+        )}
+
+        {hasNextPage && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="rounded-full bg-white/5 border border-border px-8 py-3 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition hover:bg-white/10 disabled:opacity-50"
+            >
+              {isFetchingNextPage ? "Carregando..." : "Carregar Mais"}
+            </button>
           </div>
         )}
       </main>
