@@ -31,12 +31,10 @@ export const Route = createFileRoute("/dashboard")({
   }),
 });
 
-const BRL = (cents: number) =>
-  (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
 function DashboardPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth", search: { redirect: "/dashboard" } });
@@ -69,160 +67,233 @@ function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="border-b border-border bg-charcoal/40 p-6 pt-12 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-charcoal border border-border overflow-hidden">
+    <div className="min-h-screen bg-background pb-32">
+      {/* Premium Header */}
+      <header className="relative h-64 overflow-hidden pt-12">
+        <div className="absolute inset-0 bg-ember-radial opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+        
+        <div className="relative mx-auto flex max-w-2xl items-center justify-between px-6">
+          <div className="flex items-center gap-5">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative group cursor-pointer"
+              onClick={() => navigate({ to: "/settings" })}
+            >
+              <div className="h-20 w-20 overflow-hidden rounded-[2rem] border-2 border-white/20 bg-charcoal/40 shadow-2xl backdrop-blur-md transition-all group-hover:border-ember/50">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <User className="h-8 w-8 text-muted-foreground" />
+                  <div className="grid h-full w-full place-items-center bg-gradient-to-br from-charcoal to-background">
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  </div>
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-lg bg-ember shadow-ember">
-                <Star className="h-3 w-3 text-white fill-white" />
+              <div className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-xl bg-ember shadow-ember">
+                <Star className="h-3.5 w-3.5 text-white fill-white" />
               </div>
-            </div>
+            </motion.div>
             <div>
-              <h1 className="font-display text-2xl">Olá, {profile?.display_name?.split(" ")[0] ?? "Cliente"}</h1>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <motion.div
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+              >
+                <div className="flex items-center gap-2">
+                  <h1 className="font-display text-3xl leading-none">Olá, {profile?.display_name?.split(" ")[0] ?? "Cliente"}</h1>
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-400">Verificado</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground font-medium">{user.email}</p>
+              </motion.div>
             </div>
           </div>
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate({ to: "/" });
-            }}
-            className="rounded-full bg-white/5 p-3 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative rounded-2xl bg-white/5 p-3 text-muted-foreground transition hover:bg-white/10 hover:text-foreground backdrop-blur-md"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-ember shadow-ember" />
+            </button>
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate({ to: "/" });
+              }}
+              className="rounded-2xl bg-white/5 p-3 text-muted-foreground transition hover:bg-white/10 hover:text-destructive backdrop-blur-md"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        {/* Loyalty Section */}
-        <section className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-ember/20 to-charcoal p-6 shadow-soft">
-          <div className="absolute -right-6 -top-6 grid h-24 w-24 place-items-center rounded-full bg-ember/10 blur-2xl" />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ember">
-              <FlameKindling className="h-4 w-4" /> Clube Ember
+      <main className="relative mx-auto -mt-16 max-w-2xl px-6">
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Wallet/Loyalty Card */}
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
+            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-ember/5 blur-xl" />
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-ember">
+              <Wallet className="h-3 w-3" /> Saldo
             </div>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Prata</span>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="font-display text-5xl text-gradient-ember">1.420</span>
-            <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">faíscas</span>
-          </div>
-          <div className="mt-6 space-y-2">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-background">
-              <div className="h-full w-3/4 rounded-full bg-ember shadow-ember" />
+            <div className="mt-3 flex items-baseline gap-1.5">
+              <span className="font-display text-4xl text-gradient-ember">1.420</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">faíscas</span>
             </div>
-            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              <span>800 p/ resgate</span>
-              <span>580 p/ nível Ouro</span>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground">Nível Prata</span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <Link to="/coupons" className="flex items-center justify-between rounded-2xl border border-border bg-charcoal/40 p-4 transition hover:bg-charcoal/60">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-background border border-border text-ember">
-                <Ticket className="h-5 w-5" />
-              </div>
-              <span className="font-bold text-sm">Cupons</span>
+          {/* Next Reward Card */}
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
+            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-emerald-500/5 blur-xl" />
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+              <Ticket className="h-3 w-3" /> Resgate
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-          <ActionCard icon={Settings} label="Perfil" color="text-muted-foreground" />
+            <div className="mt-3">
+              <div className="text-sm font-bold">1 Milkshake</div>
+              <div className="text-[10px] text-muted-foreground">Faltam 380 faíscas</div>
+            </div>
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-background/50">
+              <div className="h-full w-[65%] rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+            </div>
+          </section>
         </div>
 
-        {/* Recent Orders */}
-        <section className="mt-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl">Pedidos Recentes</h2>
-            <Link to="/orders" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
-          </div>
-          
-          <div className="space-y-4">
-            {ordersLoading ? (
-              [1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-3xl bg-charcoal/50 border border-border" />)
-            ) : recentOrders?.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-border bg-charcoal/20 p-10 text-center">
-                <ShoppingBag className="mx-auto h-10 w-10 opacity-20" />
-                <p className="mt-4 text-sm text-muted-foreground font-semibold">Você ainda não fez nenhum pedido.</p>
-                <Link to="/menu" className="mt-4 inline-block font-display text-ember">Abrir Cardápio →</Link>
-              </div>
-            ) : (
-              recentOrders?.map(order => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            )}
-          </div>
-        </section>
+        {/* Action Menu */}
+        <div className="mt-8 grid grid-cols-1 gap-3">
+          <MenuAction 
+            icon={History} 
+            title="Meus Pedidos" 
+            desc="Veja seu histórico e status em tempo real"
+            onClick={() => navigate({ to: "/orders" })}
+            badge={recentOrders?.length ? String(recentOrders.length) : undefined}
+          />
+          <MenuAction 
+            icon={Ticket} 
+            title="Meus Cupons" 
+            desc="Confira suas ofertas e descontos ativos"
+            onClick={() => navigate({ to: "/coupons" })}
+            color="text-ember"
+          />
+          <MenuAction 
+            icon={Settings} 
+            title="Configurações" 
+            desc="Edite seu perfil, foto e preferências"
+            onClick={() => navigate({ to: "/settings" })}
+          />
+        </div>
+
+        {/* Featured Order (Most Recent) */}
+        {!ordersLoading && recentOrders && recentOrders[0] && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h2 className="font-display text-xl uppercase tracking-widest">Acompanhar Pedido</h2>
+              <Link to="/orders" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
+            </div>
+            <OrderLiveCard order={recentOrders[0]} />
+          </section>
+        )}
       </main>
+
+      {/* Persistent Bottom Bar */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/5 bg-background/80 p-5 backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-2xl items-center justify-around">
+          <NavIcon icon={Flame} label="Início" active />
+          <Link to="/menu" className="group -mt-12 flex flex-col items-center">
+            <div className="grid h-16 w-16 place-items-center rounded-[2rem] bg-ember text-white shadow-ember transition group-hover:scale-110">
+              <ShoppingBag className="h-7 w-7" />
+            </div>
+            <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-foreground">Cardápio</span>
+          </Link>
+          <NavIcon icon={User} label="Perfil" onClick={() => navigate({ to: "/settings" })} />
+        </div>
+      </nav>
     </div>
   );
 }
 
-function ActionCard({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
+function MenuAction({ icon: Icon, title, desc, onClick, color, badge }: any) {
   return (
-    <button className="flex items-center justify-between rounded-2xl border border-border bg-charcoal/40 p-4 transition hover:bg-charcoal/60">
-      <div className="flex items-center gap-3">
-        <div className={`grid h-10 w-10 place-items-center rounded-xl bg-background border border-border ${color}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <span className="font-bold text-sm">{label}</span>
+    <button 
+      onClick={onClick}
+      className="group flex items-center gap-4 rounded-[1.5rem] border border-white/5 bg-charcoal/30 p-4 transition hover:bg-charcoal/50 hover:border-white/10"
+    >
+      <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-background border border-border group-hover:border-ember/30 transition ${color || "text-muted-foreground"}`}>
+        <Icon className="h-5 w-5" />
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      <div className="flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm">{title}</span>
+          {badge && <span className="rounded-full bg-ember px-2 py-0.5 text-[8px] font-black text-white">{badge}</span>}
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{desc}</p>
+      </div>
+      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 -translate-x-2 transition group-hover:opacity-100 group-hover:translate-x-0" />
     </button>
   );
 }
 
-function OrderCard({ order }: { order: any }) {
-  const statusLabels: Record<string, string> = {
-    received: "Recebido",
-    preparing: "Preparando",
-    ready: "Pronto",
-    delivering: "A caminho",
-    completed: "Entregue",
-    cancelled: "Cancelado",
+function NavIcon({ icon: Icon, label, active, onClick }: any) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 transition ${active ? "text-ember" : "text-muted-foreground hover:text-foreground"}`}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+    </button>
+  );
+}
+
+function OrderLiveCard({ order }: { order: any }) {
+  const statusLabels: Record<string, { label: string, color: string, progress: number }> = {
+    received: { label: "Recebido", color: "text-ember", progress: 25 },
+    preparing: { label: "Na Cozinha", color: "text-amber-400", progress: 50 },
+    ready: { label: "Pronto!", color: "text-emerald-400", progress: 75 },
+    delivering: { label: "A caminho", color: "text-purple-400", progress: 100 },
+    completed: { label: "Entregue", color: "text-muted-foreground", progress: 100 },
+    cancelled: { label: "Cancelado", color: "text-red-400", progress: 0 },
   };
 
+  const status = statusLabels[order.status as string] || statusLabels.received;
+
   return (
-    <div className="group rounded-3xl border border-border bg-charcoal/40 p-5 transition hover:bg-charcoal/60">
+    <div className="group rounded-[2rem] border border-white/5 bg-gradient-to-br from-charcoal/50 to-background p-6 transition hover:border-white/10 shadow-soft">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-background border border-border">
-            <History className="h-6 w-6 text-muted-foreground" />
+          <div className="grid h-14 w-14 place-items-center rounded-[1.2rem] bg-background border border-white/5">
+            <History className="h-7 w-7 text-muted-foreground group-hover:text-ember transition" />
           </div>
           <div>
-            <div className="font-display text-lg">#{order.code}</div>
-            <div className="text-xs text-muted-foreground">
-              {new Date(order.placed_at).toLocaleDateString("pt-BR")}
+            <div className="font-display text-2xl tracking-tight">#{order.code}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Pedido em andamento
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="font-display text-lg text-ember">{BRL(order.total_cents)}</div>
-          <span className={`text-[10px] font-black uppercase tracking-widest ${
-            order.status === "completed" ? "text-emerald-500" : "text-ember"
-          }`}>
-            {statusLabels[order.status as string]}
-          </span>
+          <div className={`text-xs font-black uppercase tracking-widest ${status.color}`}>{status.label}</div>
+          <div className="mt-1 font-display text-xl">R$ {(order.total_cents / 100).toFixed(2)}</div>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-4">
-        <div className="text-xs text-muted-foreground italic line-clamp-1 flex-1 mr-4">
-          {order.order_items?.map((it: any) => `${it.qty}x ${it.name_snapshot}`).join(", ")}
+      
+      <div className="mt-6 space-y-2">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-background/50">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${status.progress}%` }}
+            className={`h-full rounded-full transition-all duration-1000 ${status.color.replace('text', 'bg')} shadow-soft`} 
+          />
         </div>
-        <button className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/10">
-          Refazer Pedido
-        </button>
+        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+          <span>Pedido feito</span>
+          <span>Entrega</span>
+        </div>
       </div>
     </div>
   );
