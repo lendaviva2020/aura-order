@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Flame, QrCode, ShoppingBag, Sparkles, Timer, Utensils, LogIn } from "lucide-react";
+import { Flame, QrCode, ShoppingBag, Sparkles, Timer, Utensils, LogIn, User } from "lucide-react";
 import heroBurger from "@/assets/hero-burger.jpg";
 import productDouble from "@/assets/product-double.jpg";
 import productFries from "@/assets/product-fries.jpg";
