@@ -70,10 +70,37 @@ function FilterButton({ active, onClick, label }: { active: boolean; onClick: ()
 
 function OrdersHistoryPage() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<string | "all">("all");
-  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
-  const [sortBy, setSortBy] = useState<"date" | "status">("date");
+  const [filter, setFilter] = useState<string | "all">(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("orders_filter") || "all";
+    }
+    return "all";
+  });
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("orders_sort_order") as "desc" | "asc") || "desc";
+    }
+    return "desc";
+  });
+  const [sortBy, setSortBy] = useState<"date" | "status">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("orders_sort_by") as "date" | "status") || "date";
+    }
+    return "date";
+  });
   const qc = useQueryClient();
+
+  useEffect(() => {
+    localStorage.setItem("orders_filter", filter);
+  }, [filter]);
+
+  useEffect(() => {
+    localStorage.setItem("orders_sort_order", sortOrder);
+  }, [sortOrder]);
+
+  useEffect(() => {
+    localStorage.setItem("orders_sort_by", sortBy);
+  }, [sortBy]);
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
