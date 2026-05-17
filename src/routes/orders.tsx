@@ -11,6 +11,8 @@ import {
   Calendar,
   CheckCircle2,
   ChevronDown,
+  ArrowUpDown,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +40,19 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled: { label: "Cancelado", color: "text-red-400 bg-red-400/10" },
 };
 
+function SortToggle({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-[10px] font-black uppercase tracking-[0.2em] transition ${
+        active ? "text-ember" : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function FilterButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
     <button
@@ -56,6 +71,8 @@ function FilterButton({ active, onClick, label }: { active: boolean; onClick: ()
 function OrdersHistoryPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<string | "all">("all");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [sortBy, setSortBy] = useState<"date" | "status">("date");
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
@@ -139,9 +156,31 @@ function OrdersHistoryPage() {
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    if (filter === "all") return orders;
-    return orders.filter(o => o.status === filter);
-  }, [orders, filter]);
+    let result = filter === "all" ? [...orders] : orders.filter(o => o.status === filter);
+    
+    result.sort((a, b) => {
+      if (sortBy === "date") {
+        const timeA = new Date(a.placed_at).getTime();
+        const timeB = new Date(b.placed_at).getTime();
+        return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+      } else {
+        // Status priority ordering
+        const statusPriority: Record<string, number> = {
+          received: 0,
+          preparing: 1,
+          ready: 2,
+          delivering: 3,
+          completed: 4,
+          cancelled: 5
+        };
+        const priorityA = statusPriority[a.status] ?? 99;
+        const priorityB = statusPriority[b.status] ?? 99;
+        return sortOrder === "desc" ? priorityB - priorityA : priorityA - priorityB;
+      }
+    });
+
+    return result;
+  }, [orders, filter, sortBy, sortOrder]);
 
   if (authLoading) return <div className="grid min-h-screen place-items-center bg-background">Carregando...</div>;
   if (!user) return null;
@@ -158,21 +197,48 @@ function OrdersHistoryPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8">
-        {/* Filters */}
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <FilterButton 
-            active={filter === "all"} 
-            onClick={() => setFilter("all")} 
-            label="Todos" 
-          />
-          {Object.entries(STATUS_MAP).map(([id, info]) => (
-            <FilterButton
-              key={id}
-              active={filter === id}
-              onClick={() => setFilter(id)}
-              label={info.label}
-            />
-          ))}
+        {/* Filters & Sorting */}
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <FilterButton 
+                active={filter === "all"} 
+                onClick={() => setFilter("all")} 
+                label="Todos" 
+              />
+              {Object.entries(STATUS_MAP).map(([id, info]) => (
+                <FilterButton
+                  key={id}
+                  active={filter === id}
+                  onClick={() => setFilter(id)}
+                  label={info.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border/50 pt-4">
+            <div className="flex gap-2">
+              <SortToggle 
+                active={sortBy === "date"} 
+                onClick={() => setSortBy("date")}
+                label="Data"
+              />
+              <SortToggle 
+                active={sortBy === "status"} 
+                onClick={() => setSortBy("status")}
+                label="Status"
+              />
+            </div>
+            
+            <button 
+              onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-ember transition"
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              {sortOrder === "desc" ? "Mais Recentes" : "Mais Antigos"}
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
