@@ -38,6 +38,21 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled: { label: "Cancelado", color: "text-red-400 bg-red-400/10" },
 };
 
+function FilterButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest transition ${
+        active
+          ? "bg-ember text-white shadow-ember"
+          : "bg-charcoal text-muted-foreground hover:text-foreground border border-border/50"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function OrdersHistoryPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<string | "all">("all");
