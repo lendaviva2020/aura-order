@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import {
@@ -14,13 +15,16 @@ import {
   Trash2,
   Utensils,
   X,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { categories, menu, type MenuItem } from "@/lib/menu-data";
-import { useCart } from "@/lib/cart-store";
+import { useCart, type CartItem } from "@/lib/cart-store";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 const searchSchema = z.object({
-  table: z.string().default("12"),
+  table: z.string().optional(),
 });
 
 export const Route = createFileRoute("/menu")({
@@ -39,15 +43,85 @@ export const Route = createFileRoute("/menu")({
 
 type Stage = "browsing" | "checkout" | "tracking";
 
+const BRL = (cents: number) =>
+  (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 function MenuPage() {
-  const { table } = Route.useSearch();
-  const [activeCat, setActiveCat] = useState<(typeof categories)[number]["id"]>("burgers");
+  const { table: qrToken } = Route.useSearch();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const [activeCatId, setActiveCatId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("browsing");
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [orderStatus, setOrderStatus] = useState<
-    "received" | "preparing" | "ready" | "delivering" | "completed"
-  >("received");
+  const [orderId, setOrderId] = useState<string | null>(() => localStorage.getItem("ember_active_order"));
+  
+  const { data: tableData, isLoading: tableLoading } = useQuery({
+    queryKey: ["table", qrToken],
+    queryFn: async () => {
+      if (!qrToken) return null;
+      const { data } = await supabase.from("tables").select("*").eq("qr_token", qrToken).single();
+      return data;
+    },
+    enabled: !!qrToken,
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data } = await supabase.from("products").select("*").eq("available", true).order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const { data: activeOrder, isLoading: orderLoading } = useQuery({
+    queryKey: ["order", orderId],
+    queryFn: async () => {
+      if (!orderId) return null;
+      const { data } = await supabase.from("orders").select("*").eq("id", orderId).single();
+      return data;
+    },
+    enabled: !!orderId,
+  });
+
+  useEffect(() => {
+    if (categories?.length && !activeCatId) {
+      setActiveCatId(categories[0].id);
+    }
+  }, [categories, activeCatId]);
+
+  useEffect(() => {
+    if (activeOrder) {
+      if (["completed", "cancelled"].includes(activeOrder.status)) {
+        setOrderId(null);
+        localStorage.removeItem("ember_active_order");
+      } else {
+        setStage("tracking");
+      }
+    }
+  }, [activeOrder]);
+
+  // Realtime subscription for the active order
+  useEffect(() => {
+    if (!orderId) return;
+    const ch = supabase
+      .channel(`order-${orderId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, (p) => {
+        qc.setQueryData(["order", orderId], p.new);
+        toast.info(`Status do pedido: ${p.new.status}`);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [orderId, qc]);
 
   const lines = useCart((s) => s.lines);
   const add = useCart((s) => s.add);
@@ -55,43 +129,32 @@ function MenuPage() {
   const linesArr = useMemo(() => Object.values(lines), [lines]);
   const count = useMemo(() => linesArr.reduce((a, l) => a + l.qty, 0), [linesArr]);
   const subtotal = useMemo(
-    () => linesArr.reduce((a, l) => a + l.qty * l.item.price, 0),
+    () => linesArr.reduce((a, l) => a + l.qty * (l.item.price_cents / 100), 0),
     [linesArr],
   );
 
-  const itemsByCat = useMemo(
-    () => menu.filter((m) => m.category === activeCat),
-    [activeCat],
+  const filteredProducts = useMemo(
+    () => products?.filter((p) => p.category_id === activeCatId) ?? [],
+    [products, activeCatId],
   );
 
-  function handleAdd(item: MenuItem) {
-    add(item);
-    toast.success(`${item.name} adicionado`, { duration: 1400 });
+  if (qrToken && tableLoading) {
+    return <CenterLoader label="Validando mesa..." />;
   }
 
-  function placeOrder() {
-    const id = `EM-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-    setOrderId(id);
-    setStage("tracking");
-    setOrderStatus("received");
-    setCartOpen(false);
-    // Simulated status pipeline
-    setTimeout(() => setOrderStatus("preparing"), 1800);
-    setTimeout(() => setOrderStatus("ready"), 5200);
-    setTimeout(() => setOrderStatus("delivering"), 8000);
-    setTimeout(() => setOrderStatus("completed"), 11000);
-    clear();
+  if (qrToken && !tableData && !tableLoading) {
+    return <InvalidTable />;
   }
 
-  if (stage === "tracking" && orderId) {
+  if (stage === "tracking" && activeOrder) {
     return (
       <OrderTracking
-        table={table}
-        orderId={orderId}
-        status={orderStatus}
+        tableNumber={tableData?.number ?? 0}
+        order={activeOrder}
         onNew={() => {
           setStage("browsing");
           setOrderId(null);
+          localStorage.removeItem("ember_active_order");
         }}
       />
     );
@@ -109,29 +172,29 @@ function MenuPage() {
             Voltar
           </Link>
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-ember">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-ember shadow-ember">
               <Flame className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground leading-none">
                 Mesa
               </div>
-              <div className="font-display text-lg leading-tight">{table}</div>
+              <div className="font-display text-lg leading-tight">{tableData?.number ?? "??"}</div>
             </div>
           </div>
         </div>
-        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-5 pb-3">
-          {categories.map((c) => (
+        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-5 pb-3 scrollbar-hide">
+          {categories?.map((c) => (
             <button
               key={c.id}
-              onClick={() => setActiveCat(c.id)}
+              onClick={() => setActiveCatId(c.id)}
               className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition ${
-                activeCat === c.id
+                activeCatId === c.id
                   ? "bg-ember text-primary-foreground shadow-ember"
                   : "bg-charcoal text-muted-foreground hover:text-foreground"
               }`}
             >
-              {c.label}
+              {c.name}
             </button>
           ))}
         </div>
@@ -140,54 +203,8 @@ function MenuPage() {
       <main className="mx-auto max-w-3xl px-5 pt-6">
         <motion.div layout className="grid gap-4">
           <AnimatePresence mode="popLayout">
-            {itemsByCat.map((item) => (
-              <motion.article
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="group flex gap-4 overflow-hidden rounded-3xl border border-border bg-charcoal/60 p-3"
-              >
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-charcoal">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                  />
-                  {item.tag && (
-                    <span className="absolute left-1.5 top-1.5 rounded-full bg-ember px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                      {item.tag}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display text-xl leading-tight">{item.name}</h3>
-                    <div className="font-display text-xl text-ember">
-                      R$ {item.price.toFixed(2)}
-                    </div>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
-                  <div className="mt-auto flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Timer className="h-3 w-3" /> {item.prepMin}m
-                      </span>
-                      <span>{item.kcal} kcal</span>
-                    </div>
-                    <button
-                      onClick={() => handleAdd(item)}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Adicionar
-                    </button>
-                  </div>
-                </div>
-              </motion.article>
+            {filteredProducts.map((item) => (
+              <ProductCard key={item.id} item={item} onAdd={() => add(item)} />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -211,7 +228,7 @@ function MenuPage() {
               </div>
               <span className="font-bold uppercase tracking-wider">Ver carrinho</span>
             </div>
-            <span className="font-display text-xl">R$ {subtotal.toFixed(2)}</span>
+            <span className="font-display text-xl">{BRL(subtotal * 100)}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -220,17 +237,23 @@ function MenuPage() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         onCheckout={() => setStage("checkout")}
-        table={table}
+        tableNumber={tableData?.number ?? 0}
       />
 
       <AnimatePresence>
         {stage === "checkout" && (
           <CheckoutSheet
-            table={table}
-            subtotal={subtotal}
-            lines={Object.values(lines)}
+            tableData={tableData}
+            subtotalCents={subtotal * 100}
+            lines={linesArr}
             onClose={() => setStage("browsing")}
-            onConfirm={placeOrder}
+            onConfirm={(id) => {
+              setOrderId(id);
+              localStorage.setItem("ember_active_order", id);
+              setStage("tracking");
+              setCartOpen(false);
+              clear();
+            }}
           />
         )}
       </AnimatePresence>
@@ -238,23 +261,76 @@ function MenuPage() {
   );
 }
 
+function ProductCard({ item, onAdd }: { item: CartItem; onAdd: () => void }) {
+  return (
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className="group flex gap-4 overflow-hidden rounded-3xl border border-border bg-charcoal/60 p-3"
+    >
+      <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-charcoal">
+        <img
+          src={item.image_url ?? ""}
+          alt={item.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+        />
+        {item.tag && (
+          <span className="absolute left-1.5 top-1.5 rounded-full bg-ember px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+            {item.tag}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-display text-xl leading-tight">{item.name}</h3>
+          <div className="font-display text-xl text-ember">
+            {BRL(item.price_cents)}
+          </div>
+        </div>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {item.description}
+        </p>
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+            {item.prep_minutes && (
+              <span className="flex items-center gap-1">
+                <Timer className="h-3 w-3" /> {item.prep_minutes}m
+              </span>
+            )}
+            {item.kcal && <span>{item.kcal} kcal</span>}
+          </div>
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-3.5 w-3.5" /> Adicionar
+          </button>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
 function CartDrawer({
   open,
   onClose,
   onCheckout,
-  table,
+  tableNumber,
 }: {
   open: boolean;
   onClose: () => void;
   onCheckout: () => void;
-  table: string;
+  tableNumber: number;
 }) {
   const linesMap = useCart((s) => s.lines);
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
   const lines = useMemo(() => Object.values(linesMap), [linesMap]);
-  const subtotal = useMemo(
-    () => lines.reduce((a, l) => a + l.qty * l.item.price, 0),
+  const subtotalCents = useMemo(
+    () => lines.reduce((a, l) => a + l.qty * l.item.price_cents, 0),
     [lines],
   );
 
@@ -279,7 +355,7 @@ function CartDrawer({
             <div className="flex items-center justify-between border-b border-border px-6 py-5">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  Mesa {table}
+                  Mesa {tableNumber}
                 </div>
                 <h3 className="font-display text-2xl">Seu pedido</h3>
               </div>
@@ -302,7 +378,7 @@ function CartDrawer({
                       className="flex items-center gap-4 rounded-2xl border border-border bg-charcoal/50 p-3"
                     >
                       <img
-                        src={l.item.image}
+                        src={l.item.image_url ?? ""}
                         alt=""
                         className="h-16 w-16 rounded-xl object-cover"
                       />
@@ -318,7 +394,7 @@ function CartDrawer({
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          R$ {l.item.price.toFixed(2)} cada
+                          {BRL(l.item.price_cents)} cada
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
@@ -337,7 +413,7 @@ function CartDrawer({
                             </button>
                           </div>
                           <div className="font-display text-lg text-ember">
-                            R$ {(l.item.price * l.qty).toFixed(2)}
+                            {BRL(l.item.price_cents * l.qty)}
                           </div>
                         </div>
                       </div>
@@ -352,7 +428,7 @@ function CartDrawer({
                   Subtotal
                 </span>
                 <span className="font-display text-3xl text-gradient-ember">
-                  R$ {subtotal.toFixed(2)}
+                  {BRL(subtotalCents)}
                 </span>
               </div>
               <button
@@ -371,29 +447,58 @@ function CartDrawer({
 }
 
 function CheckoutSheet({
-  table,
-  subtotal,
+  tableData,
+  subtotalCents,
   lines,
   onClose,
   onConfirm,
 }: {
-  table: string;
-  subtotal: number;
-  lines: { item: MenuItem; qty: number }[];
+  tableData: any;
+  subtotalCents: number;
+  lines: any[];
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (id: string) => void;
 }) {
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
+  const tax = subtotalCents * 0.1;
+  const total = subtotalCents + tax;
 
-  function pay() {
+  async function pay() {
     setPaying(true);
-    setTimeout(() => {
+    try {
+      // 1. Create order
+      const { data: order, error: orderErr } = await supabase.from("orders").insert({
+        table_id: tableData?.id,
+        subtotal_cents: subtotalCents,
+        tax_cents: Math.round(tax),
+        total_cents: Math.round(total),
+        payment_method: method,
+        status: "received",
+      }).select().single();
+
+      if (orderErr) throw orderErr;
+
+      // 2. Create order items
+      const items = lines.map(l => ({
+        order_id: order.id,
+        product_id: l.item.id,
+        name_snapshot: l.item.name,
+        qty: l.qty,
+        unit_price_cents: l.item.price_cents,
+      }));
+
+      const { error: itemsErr } = await supabase.from("order_items").insert(items);
+      if (itemsErr) throw itemsErr;
+
+      toast.success("Pedido realizado com sucesso!");
+      onConfirm(order.id);
+    } catch (e) {
+      toast.error("Falha ao processar pedido");
+      console.error(e);
+    } finally {
       setPaying(false);
-      onConfirm();
-    }, 1400);
+    }
   }
 
   return (
@@ -415,7 +520,7 @@ function CheckoutSheet({
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Mesa {table} · Pagamento
+              Mesa {tableData?.number ?? "??"} · Pagamento
             </div>
             <h3 className="font-display text-2xl">Pague e confirme</h3>
           </div>
@@ -435,13 +540,13 @@ function CheckoutSheet({
                   <span>
                     <span className="font-bold text-ember">{l.qty}×</span> {l.item.name}
                   </span>
-                  <span>R$ {(l.item.price * l.qty).toFixed(2)}</span>
+                  <span>{BRL(l.item.price_cents * l.qty)}</span>
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
-              <Row label="Subtotal" value={`R$ ${subtotal.toFixed(2)}`} />
-              <Row label="Taxa de serviço (10%)" value={`R$ ${tax.toFixed(2)}`} />
-              <Row label="Total" value={`R$ ${total.toFixed(2)}`} bold />
+              <Row label="Subtotal" value={BRL(subtotalCents)} />
+              <Row label="Taxa de serviço (10%)" value={BRL(tax)} />
+              <Row label="Total" value={BRL(total)} bold />
             </div>
           </section>
 
@@ -469,13 +574,10 @@ function CheckoutSheet({
           <button
             disabled={paying}
             onClick={pay}
-            className="mt-2 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-3 rounded-full bg-ember py-5 text-lg font-bold uppercase tracking-[0.2em] text-white shadow-ember transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            {paying ? "Processando…" : `Pagar R$ ${total.toFixed(2)}`}
+            {paying ? <Loader2 className="h-5 w-5 animate-spin" /> : "Pagar Agora"}
           </button>
-          <p className="text-center text-xs text-muted-foreground">
-            Pagamento demonstrativo · sem cobrança real
-          </p>
         </div>
       </motion.div>
     </>
@@ -484,122 +586,109 @@ function CheckoutSheet({
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div
-      className={`flex justify-between ${
-        bold ? "text-base font-display text-foreground" : "text-sm text-muted-foreground"
-      }`}
-    >
+    <div className={`flex justify-between ${bold ? "text-lg font-display text-ember" : "text-xs text-muted-foreground"}`}>
       <span>{label}</span>
       <span>{value}</span>
     </div>
   );
 }
 
-const STAGES = [
-  { id: "received", label: "Recebido", icon: CheckCircle2 },
-  { id: "preparing", label: "Preparando", icon: ChefHat },
-  { id: "ready", label: "Pronto", icon: Flame },
-  { id: "delivering", label: "A caminho", icon: Utensils },
-  { id: "completed", label: "Entregue", icon: CheckCircle2 },
-] as const;
+function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, order: any; onNew: () => void }) {
+  const statusSteps = [
+    { id: "received", label: "Recebido", icon: ClipboardListIcon },
+    { id: "preparing", label: "Na Cozinha", icon: ChefHat },
+    { id: "ready", label: "Pronto!", icon: Utensils },
+    { id: "delivering", label: "A Caminho", icon: CheckCircle2 },
+  ];
 
-function OrderTracking({
-  table,
-  orderId,
-  status,
-  onNew,
-}: {
-  table: string;
-  orderId: string;
-  status: (typeof STAGES)[number]["id"];
-  onNew: () => void;
-}) {
-  const activeIdx = STAGES.findIndex((s) => s.id === status);
+  const currentIdx = statusSteps.findIndex(s => s.id === order.status);
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Início
-          </Link>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Pedido
-            </div>
-            <div className="font-display text-lg">{orderId}</div>
-          </div>
+    <div className="min-h-screen bg-background px-6 py-12 text-center">
+      <div className="mx-auto max-w-sm">
+        <div className="relative mx-auto mb-8 grid h-24 w-24 place-items-center rounded-3xl bg-ember shadow-ember">
+          <Flame className="h-12 w-12 text-white" />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute -inset-2 -z-10 rounded-3xl bg-ember/20 blur-xl"
+          />
         </div>
-      </header>
 
-      <main className="mx-auto max-w-3xl px-5 py-12">
-        <motion.div
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="mx-auto grid h-28 w-28 place-items-center rounded-full bg-ember/15"
-        >
-          <div className="grid h-20 w-20 place-items-center rounded-full bg-ember shadow-ember">
-            <Flame className="h-10 w-10 text-primary-foreground" />
-          </div>
-        </motion.div>
+        <h2 className="font-display text-3xl">Pedido #{order.code}</h2>
+        <p className="mt-2 text-muted-foreground">Mesa {tableNumber} · Acompanhe seu pedido</p>
 
-        <h1 className="mt-8 text-center font-display text-5xl">
-          {status === "completed" ? "Bom apetite!" : "Pedido enviado"}
-        </h1>
-        <p className="mt-2 text-center text-muted-foreground">
-          Mesa <span className="font-bold text-foreground">{table}</span> · levamos direto até
-          você.
-        </p>
-
-        <div className="mt-12 rounded-3xl border border-border bg-charcoal/40 p-6">
-          <div className="space-y-5">
-            {STAGES.map((s, i) => {
-              const done = i < activeIdx;
-              const active = i === activeIdx;
-              const Icon = s.icon;
-              return (
-                <div key={s.id} className="flex items-center gap-4">
-                  <div
-                    className={`grid h-11 w-11 place-items-center rounded-full border transition ${
-                      active
-                        ? "border-ember bg-ember text-primary-foreground shadow-ember animate-ember-pulse"
-                        : done
-                          ? "border-ember/60 bg-ember/15 text-ember"
-                          : "border-border text-muted-foreground"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div
-                      className={`font-display text-xl ${
-                        active || done ? "text-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      {s.label}
-                    </div>
-                  </div>
-                  {active && (
-                    <span className="text-xs uppercase tracking-widest text-ember">Agora</span>
-                  )}
+        <div className="mt-12 space-y-8 text-left">
+          {statusSteps.map((step, idx) => {
+            const isDone = idx < currentIdx;
+            const isCurrent = idx === currentIdx;
+            const Icon = step.icon;
+            
+            return (
+              <div key={step.id} className="relative flex items-center gap-5">
+                {idx < statusSteps.length - 1 && (
+                  <div className={`absolute left-6 top-10 h-8 w-0.5 ${isDone ? "bg-ember" : "bg-border"}`} />
+                )}
+                <div className={`grid h-12 w-12 place-items-center rounded-2xl border-2 transition-colors ${
+                  isDone || isCurrent ? "border-ember bg-ember text-white" : "border-border bg-charcoal/50 text-muted-foreground"
+                }`}>
+                  <Icon className="h-5 w-5" />
                 </div>
-              );
-            })}
-          </div>
+                <div>
+                  <div className={`text-sm font-bold uppercase tracking-widest ${isDone || isCurrent ? "text-foreground" : "text-muted-foreground"}`}>
+                    {step.label}
+                  </div>
+                  {isCurrent && <div className="text-xs text-ember">Aguarde um momento...</div>}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {status === "completed" && (
-          <button
-            onClick={onNew}
-            className="mt-8 w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-[1.01]"
-          >
-            Fazer novo pedido
-          </button>
-        )}
-      </main>
+        <button
+          onClick={onNew}
+          className="mt-16 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+        >
+          Pedir mais coisas
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClipboardListIcon(props: any) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+  );
+}
+
+function CenterLoader({ label }: { label: string }) {
+  return (
+    <div className="grid min-h-screen place-items-center bg-background">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-ember" />
+        <p className="mt-4 font-display text-xl text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function InvalidTable() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-background p-5 text-center">
+      <div className="max-w-sm rounded-3xl border border-border bg-charcoal/60 p-8">
+        <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+        <h1 className="mt-6 font-display text-2xl">QR Code Inválido</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Não conseguimos identificar sua mesa. Por favor, peça ajuda ao garçom ou tente escanear novamente.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 block w-full rounded-full bg-white/5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-white/10"
+        >
+          Voltar para Home
+        </Link>
+      </div>
     </div>
   );
 }

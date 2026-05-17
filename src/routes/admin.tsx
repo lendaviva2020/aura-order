@@ -700,7 +700,7 @@ function TablesTab() {
   }
 
   function qrUrl(t: Table) {
-    return `${window.location.origin}/menu?table=${t.number}&t=${t.qr_token.slice(0, 8)}`;
+    return `${window.location.origin}/menu?table=${t.qr_token}`;
   }
 
   return (
