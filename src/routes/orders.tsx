@@ -80,18 +80,34 @@ function OrdersHistoryPage() {
     if (!authLoading && !user) navigate({ to: "/auth", search: { redirect: "/orders" } });
   }, [authLoading, user, navigate]);
 
-  const { data: orders, isLoading } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
     queryKey: ["all-user-orders", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
+    queryFn: async ({ pageParam = 0 }) => {
+      const pageSize = 10;
+      const { data, error } = await supabase
         .from("orders")
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
-        .order("placed_at", { ascending: false });
+        .order("placed_at", { ascending: false })
+        .range(pageParam, pageParam + pageSize - 1);
+      
+      if (error) throw error;
       return data ?? [];
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 10) return undefined;
+      return allPages.length * 10;
     },
     enabled: !!user,
   });
+
+  const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   // Realtime updates for order status changes and new orders
   useEffect(() => {
