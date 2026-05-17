@@ -62,8 +62,14 @@ function MenuPage() {
     queryKey: ["table", qrToken],
     queryFn: async () => {
       if (!qrToken) return null;
-      const { data } = await supabase.from("tables").select("*").eq("qr_token", qrToken).single();
-      return data;
+      
+      // Try by number first (legacy/easy)
+      const { data: byNum } = await supabase.from("tables").select("*").eq("number", parseInt(qrToken)).single();
+      if (byNum) return byNum;
+
+      // Try by full qr_token
+      const { data: byToken } = await supabase.from("tables").select("*").eq("qr_token", qrToken).single();
+      return byToken;
     },
     enabled: !!qrToken,
   });
