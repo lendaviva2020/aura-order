@@ -596,7 +596,40 @@ function CheckoutSheet({
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
+              
+              {/* Coupon Section */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Ticket className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="CUPOM"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-xs font-bold uppercase tracking-widest focus:border-ember focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={validateCoupon}
+                    disabled={validatingCoupon || !couponCode}
+                    className="rounded-xl bg-charcoal px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white/5 disabled:opacity-50"
+                  >
+                    {validatingCoupon ? <Loader2 className="h-3 w-3 animate-spin" /> : "Aplicar"}
+                  </button>
+                </div>
+                {coupon && (
+                  <div className="mt-2 flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                    <span>Cupom {coupon.code} aplicado</span>
+                    <button onClick={() => setCoupon(null)} className="hover:text-white">Remover</button>
+                  </div>
+                )}
+              </div>
+
               <Row label="Subtotal" value={BRL(subtotalCents)} />
+              {discountCents > 0 && (
+                <Row label="Desconto" value={`-${BRL(discountCents)}`} />
+              )}
               <Row label="Taxa de serviço (10%)" value={BRL(tax)} />
               <Row label="Total" value={BRL(total)} bold />
             </div>
