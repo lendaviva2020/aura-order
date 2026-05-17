@@ -173,9 +173,9 @@ function OrdersHistoryPage() {
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    let result = filter === "all" ? [...orders] : orders.filter(o => o.status === filter);
+    let result = filter === "all" ? [...orders] : orders.filter((o: any) => o.status === filter);
     
-    result.sort((a, b) => {
+    result.sort((a: any, b: any) => {
       if (sortBy === "date") {
         const timeA = new Date(a.placed_at).getTime();
         const timeB = new Date(b.placed_at).getTime();
