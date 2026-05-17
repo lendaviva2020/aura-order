@@ -116,7 +116,7 @@ function OrdersGrid({
 }: { 
   view: ViewType; 
   soundEnabled: boolean;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
 }) {
   const qc = useQueryClient();
   const statuses = view === "kitchen" ? ["received", "preparing"] : ["ready", "delivering"];
