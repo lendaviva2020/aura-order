@@ -13,6 +13,7 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CouponsRouteImport } from './routes/coupons'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -37,6 +38,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CouponsRoute = CouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/coupons': typeof CouponsRoute
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/coupons': typeof CouponsRoute
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/coupons': typeof CouponsRoute
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -87,17 +96,27 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/coupons'
     | '/dashboard'
     | '/kds'
     | '/menu'
     | '/orders'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/dashboard' | '/kds' | '/menu' | '/orders'
+  to:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/coupons'
+    | '/dashboard'
+    | '/kds'
+    | '/menu'
+    | '/orders'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/auth'
+    | '/coupons'
     | '/dashboard'
     | '/kds'
     | '/menu'
@@ -108,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  CouponsRoute: typeof CouponsRoute
   DashboardRoute: typeof DashboardRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
@@ -144,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coupons': {
+      id: '/coupons'
+      path: '/coupons'
+      fullPath: '/coupons'
+      preLoaderRoute: typeof CouponsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -172,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  CouponsRoute: CouponsRoute,
   DashboardRoute: DashboardRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
