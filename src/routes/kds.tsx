@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { useRoles } from "@/hooks/use-roles";
+import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/kds")({
   component: KDSPage,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/kds")({
 });
 
 type ViewType = "kitchen" | "waiter";
+type OrderStatus = Database["public"]["Enums"]["order_status"];
 
 function KDSPage() {
   const navigate = useNavigate();
@@ -119,7 +121,9 @@ function OrdersGrid({
   audioRef: React.RefObject<HTMLAudioElement | null>;
 }) {
   const qc = useQueryClient();
-  const statuses = view === "kitchen" ? ["received", "preparing"] : ["ready", "delivering"];
+  const statuses: OrderStatus[] = view === "kitchen" 
+    ? ["received", "preparing"] 
+    : ["ready", "delivering"];
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["kds", "orders", view],
