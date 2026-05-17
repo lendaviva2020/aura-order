@@ -126,7 +126,15 @@ function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-2 gap-4">
-          <ActionCard icon={Ticket} label="Cupons" color="text-ember" />
+          <Link to="/coupons" className="flex items-center justify-between rounded-2xl border border-border bg-charcoal/40 p-4 transition hover:bg-charcoal/60">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-background border border-border text-ember">
+                <Ticket className="h-5 w-5" />
+              </div>
+              <span className="font-bold text-sm">Cupons</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
           <ActionCard icon={Settings} label="Perfil" color="text-muted-foreground" />
         </div>
 
@@ -134,7 +142,7 @@ function DashboardPage() {
         <section className="mt-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl">Pedidos Recentes</h2>
-            <Link to="/dashboard" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
+            <Link to="/orders" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
           </div>
           
           <div className="space-y-4">

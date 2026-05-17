@@ -17,6 +17,7 @@ import {
   X,
   AlertCircle,
   Loader2,
+  Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart, type CartItem } from "@/lib/cart-store";
@@ -61,8 +62,14 @@ function MenuPage() {
     queryKey: ["table", qrToken],
     queryFn: async () => {
       if (!qrToken) return null;
-      const { data } = await supabase.from("tables").select("*").eq("qr_token", qrToken).single();
-      return data;
+      
+      // Try by number first (legacy/easy)
+      const { data: byNum } = await supabase.from("tables").select("*").eq("number", parseInt(qrToken)).single();
+      if (byNum) return byNum;
+
+      // Try by full qr_token
+      const { data: byToken } = await supabase.from("tables").select("*").eq("qr_token", qrToken).single();
+      return byToken;
     },
     enabled: !!qrToken,
   });
@@ -459,10 +466,52 @@ function CheckoutSheet({
   onClose: () => void;
   onConfirm: (id: string) => void;
 }) {
+  const { user } = useAuth();
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<any>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
   const tax = subtotalCents * 0.1;
-  const total = subtotalCents + tax;
+  
+  const discountCents = useMemo(() => {
+    if (!coupon) return 0;
+    if (coupon.discount_type === 'fixed') return coupon.value;
+    return Math.round(subtotalCents * (coupon.value / 100));
+  }, [coupon, subtotalCents]);
+
+  const total = Math.max(0, subtotalCents - discountCents + tax);
+
+  async function validateCoupon() {
+    if (!couponCode) return;
+    setValidatingCoupon(true);
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase())
+        .eq("active", true)
+        .single();
+
+      if (error || !data) {
+        toast.error("Cupom inválido ou expirado");
+        setCoupon(null);
+        return;
+      }
+
+      if (data.min_order_cents && subtotalCents < data.min_order_cents) {
+        toast.error(`Pedido mínimo para este cupom: ${BRL(data.min_order_cents)}`);
+        setCoupon(null);
+        return;
+      }
+
+      setCoupon(data);
+      toast.success("Cupom aplicado!");
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
 
   async function pay() {
     setPaying(true);
@@ -470,11 +519,14 @@ function CheckoutSheet({
       // 1. Create order
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         table_id: tableData?.id,
+        customer_id: user?.id || null,
         subtotal_cents: subtotalCents,
         tax_cents: Math.round(tax),
+        discount_cents: discountCents,
         total_cents: Math.round(total),
         payment_method: method,
         status: "received",
+        coupon_id: coupon?.id || null,
       }).select().single();
 
       if (orderErr) throw orderErr;
@@ -544,7 +596,40 @@ function CheckoutSheet({
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
+              
+              {/* Coupon Section */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Ticket className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="CUPOM"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-xs font-bold uppercase tracking-widest focus:border-ember focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={validateCoupon}
+                    disabled={validatingCoupon || !couponCode}
+                    className="rounded-xl bg-charcoal px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white/5 disabled:opacity-50"
+                  >
+                    {validatingCoupon ? <Loader2 className="h-3 w-3 animate-spin" /> : "Aplicar"}
+                  </button>
+                </div>
+                {coupon && (
+                  <div className="mt-2 flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                    <span>Cupom {coupon.code} aplicado</span>
+                    <button onClick={() => setCoupon(null)} className="hover:text-white">Remover</button>
+                  </div>
+                )}
+              </div>
+
               <Row label="Subtotal" value={BRL(subtotalCents)} />
+              {discountCents > 0 && (
+                <Row label="Desconto" value={`-${BRL(discountCents)}`} />
+              )}
               <Row label="Taxa de serviço (10%)" value={BRL(tax)} />
               <Row label="Total" value={BRL(total)} bold />
             </div>

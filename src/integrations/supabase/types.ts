@@ -41,6 +41,51 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string | null
+          description: string | null
+          discount_type: string
+          expires_at: string | null
+          id: string
+          max_discount_cents: number | null
+          min_order_cents: number | null
+          starts_at: string | null
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          discount_type: string
+          expires_at?: string | null
+          id?: string
+          max_discount_cents?: number | null
+          min_order_cents?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string
+          expires_at?: string | null
+          id?: string
+          max_discount_cents?: number | null
+          min_order_cents?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -93,8 +138,10 @@ export type Database = {
         Row: {
           code: string
           completed_at: string | null
+          coupon_id: string | null
           created_at: string
           customer_id: string | null
+          discount_cents: number | null
           id: string
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
@@ -110,8 +157,10 @@ export type Database = {
         Insert: {
           code?: string
           completed_at?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          discount_cents?: number | null
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -127,8 +176,10 @@ export type Database = {
         Update: {
           code?: string
           completed_at?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          discount_cents?: number | null
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -142,6 +193,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_table_id_fkey"
             columns: ["table_id"]
