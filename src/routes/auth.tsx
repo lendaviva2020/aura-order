@@ -88,7 +88,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: redirect ?? "/" });
+      navigate({ to: redirect ?? "/dashboard" });
     } catch {
       toast.error("Falha no login com Google");
       setLoading(false);
