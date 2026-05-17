@@ -277,9 +277,21 @@ function OrdersHistoryPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredOrders?.map(order => (
+            {filteredOrders?.map((order: any) => (
               <DetailedOrderCard key={order.id} order={order} />
             ))}
+          </div>
+        )}
+
+        {hasNextPage && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="rounded-full bg-white/5 border border-border px-8 py-3 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition hover:bg-white/10 disabled:opacity-50"
+            >
+              {isFetchingNextPage ? "Carregando..." : "Carregar Mais"}
+            </button>
           </div>
         )}
       </main>
