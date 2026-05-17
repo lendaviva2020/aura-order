@@ -111,9 +111,8 @@ function OrdersHistoryPage() {
         }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIPTION_ERROR') {
-          console.error("Realtime subscription error, retrying...");
-          // Supabase client handles basic retries, but we could add custom logic here
+        if (status !== 'SUBSCRIBED') {
+          console.log("Realtime status:", status);
         }
       });
 
