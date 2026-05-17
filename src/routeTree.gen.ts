@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -16,6 +17,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/orders': typeof OrdersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/orders': typeof OrdersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +79,29 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/orders': typeof OrdersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/dashboard' | '/kds' | '/menu'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/dashboard'
+    | '/kds'
+    | '/menu'
+    | '/orders'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/dashboard' | '/kds' | '/menu'
-  id: '__root__' | '/' | '/admin' | '/auth' | '/dashboard' | '/kds' | '/menu'
+  to: '/' | '/admin' | '/auth' | '/dashboard' | '/kds' | '/menu' | '/orders'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/dashboard'
+    | '/kds'
+    | '/menu'
+    | '/orders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,10 +111,18 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
+  OrdersRoute: typeof OrdersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/menu': {
       id: '/menu'
       path: '/menu'
@@ -143,7 +175,18 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
+  OrdersRoute: OrdersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
