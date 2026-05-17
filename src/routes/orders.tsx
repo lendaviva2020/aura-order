@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -39,6 +39,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
 function OrdersHistoryPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -57,6 +58,37 @@ function OrdersHistoryPage() {
     },
     enabled: !!user,
   });
+
+  // Realtime updates for order status changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`user-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `customer_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Update the specific order in the query cache for instant feedback
+          qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
+            if (!old) return old;
+            return old.map((order) =>
+              order.id === payload.new.id ? { ...order, ...payload.new } : order
+            );
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
 
   if (authLoading) return <div className="grid min-h-screen place-items-center bg-background">Carregando...</div>;
   if (!user) return null;
