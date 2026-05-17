@@ -460,10 +460,52 @@ function CheckoutSheet({
   onClose: () => void;
   onConfirm: (id: string) => void;
 }) {
+  const { user } = useAuth();
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<any>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
   const tax = subtotalCents * 0.1;
-  const total = subtotalCents + tax;
+  
+  const discountCents = useMemo(() => {
+    if (!coupon) return 0;
+    if (coupon.discount_type === 'fixed') return coupon.value;
+    return Math.round(subtotalCents * (coupon.value / 100));
+  }, [coupon, subtotalCents]);
+
+  const total = Math.max(0, subtotalCents - discountCents + tax);
+
+  async function validateCoupon() {
+    if (!couponCode) return;
+    setValidatingCoupon(true);
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase())
+        .eq("active", true)
+        .single();
+
+      if (error || !data) {
+        toast.error("Cupom inválido ou expirado");
+        setCoupon(null);
+        return;
+      }
+
+      if (data.min_order_cents && subtotalCents < data.min_order_cents) {
+        toast.error(`Pedido mínimo para este cupom: ${BRL(data.min_order_cents)}`);
+        setCoupon(null);
+        return;
+      }
+
+      setCoupon(data);
+      toast.success("Cupom aplicado!");
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
 
   async function pay() {
     setPaying(true);
@@ -471,11 +513,14 @@ function CheckoutSheet({
       // 1. Create order
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         table_id: tableData?.id,
+        customer_id: user?.id || null,
         subtotal_cents: subtotalCents,
         tax_cents: Math.round(tax),
+        discount_cents: discountCents,
         total_cents: Math.round(total),
         payment_method: method,
         status: "received",
+        coupon_id: coupon?.id || null,
       }).select().single();
 
       if (orderErr) throw orderErr;
@@ -495,6 +540,12 @@ function CheckoutSheet({
       toast.success("Pedido realizado com sucesso!");
       onConfirm(order.id);
     } catch (e) {
+      toast.error("Falha ao processar pedido");
+      console.error(e);
+    } finally {
+      setPaying(false);
+    }
+  }
       toast.error("Falha ao processar pedido");
       console.error(e);
     } finally {
