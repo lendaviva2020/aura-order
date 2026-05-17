@@ -95,12 +95,13 @@ function OrdersHistoryPage() {
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
         .order("placed_at", { ascending: false })
-        .range(pageParam, pageParam + pageSize - 1);
+        .range(pageParam as number, (pageParam as number) + pageSize - 1);
       
       if (error) throw error;
-      return data ?? [];
+      return (data as any[]) ?? [];
     },
-    getNextPageParam: (lastPage, allPages) => {
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: any[], allPages: any[]) => {
       if (lastPage.length < 10) return undefined;
       return allPages.length * 10;
     },
