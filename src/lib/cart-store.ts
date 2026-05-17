@@ -1,16 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { MenuItem } from "./menu-data";
+import type { Tables } from "@/integrations/supabase/types";
+
+export type CartItem = Tables<"products">;
 
 export type CartLine = {
-  item: MenuItem;
+  item: CartItem;
   qty: number;
   note?: string;
 };
 
 type CartState = {
   lines: Record<string, CartLine>;
-  add: (item: MenuItem) => void;
+  add: (item: CartItem) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   setNote: (id: string, note: string) => void;
@@ -56,7 +58,7 @@ export const useCart = create<CartState>()(
       clear: () => set({ lines: {} }),
       count: () => Object.values(get().lines).reduce((a, l) => a + l.qty, 0),
       subtotal: () =>
-        Object.values(get().lines).reduce((a, l) => a + l.qty * l.item.price, 0),
+        Object.values(get().lines).reduce((a, l) => a + l.qty * (l.item.price_cents / 100), 0),
     }),
     { name: "ember-cart" },
   ),
