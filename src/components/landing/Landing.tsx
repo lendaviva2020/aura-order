@@ -41,10 +41,10 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link
-            to="/auth"
+            to="/dashboard"
             className="hidden items-center gap-1.5 rounded-full border border-border bg-charcoal/60 px-4 py-2 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-charcoal sm:inline-flex"
           >
-            <LogIn className="h-4 w-4" /> Entrar
+            <User className="h-4 w-4" /> Minha Conta
           </Link>
           <Link
             to="/menu"
