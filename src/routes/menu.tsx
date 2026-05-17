@@ -17,6 +17,7 @@ import {
   X,
   AlertCircle,
   Loader2,
+  Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart, type CartItem } from "@/lib/cart-store";
