@@ -40,6 +40,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
 function OrdersHistoryPage() {
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<string | "all">("all");
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
