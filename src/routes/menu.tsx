@@ -546,12 +546,6 @@ function CheckoutSheet({
       setPaying(false);
     }
   }
-      toast.error("Falha ao processar pedido");
-      console.error(e);
-    } finally {
-      setPaying(false);
-    }
-  }
 
   return (
     <>
