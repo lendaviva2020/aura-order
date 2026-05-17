@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -38,8 +38,24 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled: { label: "Cancelado", color: "text-red-400 bg-red-400/10" },
 };
 
+function FilterButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest transition ${
+        active
+          ? "bg-ember text-white shadow-ember"
+          : "bg-charcoal text-muted-foreground hover:text-foreground border border-border/50"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function OrdersHistoryPage() {
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<string | "all">("all");
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
@@ -121,6 +137,12 @@ function OrdersHistoryPage() {
     };
   }, [user?.id, qc]);
 
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    if (filter === "all") return orders;
+    return orders.filter(o => o.status === filter);
+  }, [orders, filter]);
+
   if (authLoading) return <div className="grid min-h-screen place-items-center bg-background">Carregando...</div>;
   if (!user) return null;
 
@@ -136,20 +158,43 @@ function OrdersHistoryPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-8">
+        {/* Filters */}
+        <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <FilterButton 
+            active={filter === "all"} 
+            onClick={() => setFilter("all")} 
+            label="Todos" 
+          />
+          {Object.entries(STATUS_MAP).map(([id, info]) => (
+            <FilterButton
+              key={id}
+              active={filter === id}
+              onClick={() => setFilter(id)}
+              label={info.label}
+            />
+          ))}
+        </div>
+
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 animate-pulse rounded-3xl bg-charcoal/50 border border-border" />)}
           </div>
-        ) : orders?.length === 0 ? (
+        ) : filteredOrders?.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-charcoal/20 p-12 text-center">
             <ShoppingBag className="mx-auto h-12 w-12 opacity-20" />
-            <h2 className="mt-4 font-display text-xl opacity-50">Nenhum pedido ainda</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Seus pedidos aparecerão aqui assim que você os fizer.</p>
-            <Link to="/menu" className="mt-6 inline-block rounded-full bg-ember px-8 py-3 font-bold uppercase tracking-widest text-white shadow-ember">Ver Cardápio</Link>
+            <h2 className="mt-4 font-display text-xl opacity-50">Nenhum pedido encontrado</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {filter === "all" 
+                ? "Seus pedidos aparecerão aqui assim que você os fizer." 
+                : `Não há pedidos com o status "${STATUS_MAP[filter]?.label}".`}
+            </p>
+            {filter === "all" && (
+              <Link to="/menu" className="mt-6 inline-block rounded-full bg-ember px-8 py-3 font-bold uppercase tracking-widest text-white shadow-ember">Ver Cardápio</Link>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {orders?.map(order => (
+            {filteredOrders?.map(order => (
               <DetailedOrderCard key={order.id} order={order} />
             ))}
           </div>
