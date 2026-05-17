@@ -36,7 +36,7 @@ function AuthPage() {
   // If already logged in, redirect away
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate({ to: redirect ?? "/" });
+      if (session) navigate({ to: redirect ?? "/dashboard" });
     });
   }, [navigate, redirect]);
 
@@ -60,7 +60,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bem-vindo de volta!");
-        navigate({ to: redirect ?? "/" });
+        navigate({ to: redirect ?? "/dashboard" });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
@@ -88,7 +88,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: redirect ?? "/" });
+      navigate({ to: redirect ?? "/dashboard" });
     } catch {
       toast.error("Falha no login com Google");
       setLoading(false);
