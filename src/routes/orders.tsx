@@ -122,6 +122,12 @@ function OrdersHistoryPage() {
     };
   }, [user?.id, qc]);
 
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    if (filter === "all") return orders;
+    return orders.filter(o => o.status === filter);
+  }, [orders, filter]);
+
   if (authLoading) return <div className="grid min-h-screen place-items-center bg-background">Carregando...</div>;
   if (!user) return null;
 
