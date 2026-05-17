@@ -59,31 +59,62 @@ function OrdersHistoryPage() {
     enabled: !!user,
   });
 
-  // Realtime updates for order status changes
+  // Realtime updates for order status changes and new orders
   useEffect(() => {
     if (!user?.id) return;
 
+    // Use a unique channel name to avoid conflicts
     const channel = supabase
-      .channel(`user-orders-${user.id}`)
+      .channel(`user-orders-live-${user.id}`)
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*", // Listen to INSERT and UPDATE
           schema: "public",
           table: "orders",
           filter: `customer_id=eq.${user.id}`,
         },
-        (payload) => {
-          // Update the specific order in the query cache for instant feedback
-          qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
-            if (!old) return old;
-            return old.map((order) =>
-              order.id === payload.new.id ? { ...order, ...payload.new } : order
-            );
-          });
+        async (payload) => {
+          if (payload.eventType === "INSERT") {
+            // For new orders, we need to fetch the full object (including tables and items)
+            const { data: fullOrder } = await supabase
+              .from("orders")
+              .select("*, order_items(*), tables(number)")
+              .eq("id", payload.new.id)
+              .single();
+
+            if (fullOrder) {
+              qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
+                const list = old || [];
+                // Avoid duplicates and keep sorted
+                if (list.some(o => o.id === fullOrder.id)) return list;
+                return [fullOrder, ...list];
+              });
+              toast.success(`Pedido #${fullOrder.code} criado com sucesso!`);
+            }
+          } else if (payload.eventType === "UPDATE") {
+            // Update the specific order in the query cache
+            qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
+              if (!old) return old;
+              return old.map((order) =>
+                order.id === payload.new.id ? { ...order, ...payload.new } : order
+              );
+            });
+
+            // Show toast for status change
+            const statusLabel = STATUS_MAP[payload.new.status as string]?.label || payload.new.status;
+            toast.info(`Pedido #${payload.new.code}: Status atualizado para ${statusLabel}`, {
+              icon: <Clock className="h-4 w-4" />,
+            });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIPTION_ERROR') {
+          console.error("Realtime subscription error, retrying...");
+          // Supabase client handles basic retries, but we could add custom logic here
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
