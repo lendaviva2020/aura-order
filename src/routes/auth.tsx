@@ -36,7 +36,7 @@ function AuthPage() {
   // If already logged in, redirect away
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate({ to: redirect ?? "/" });
+      if (session) navigate({ to: redirect ?? "/dashboard" });
     });
   }, [navigate, redirect]);
 
