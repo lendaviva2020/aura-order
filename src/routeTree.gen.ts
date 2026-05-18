@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SysCtrlX9k2Prime7af3RouteImport } from './routes/sys-ctrl-x9k2-prime-7af3'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -19,6 +20,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SysCtrlX9k2Prime7af3Route = SysCtrlX9k2Prime7af3RouteImport.update({
+  id: '/sys-ctrl-x9k2-prime-7af3',
+  path: '/sys-ctrl-x9k2-prime-7af3',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-prime-7af3'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-prime-7af3'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-prime-7af3'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,10 +157,18 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
   SettingsRoute: typeof SettingsRoute
+  SysCtrlX9k2Prime7af3Route: typeof SysCtrlX9k2Prime7af3Route
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sys-ctrl-x9k2-prime-7af3': {
+      id: '/sys-ctrl-x9k2-prime-7af3'
+      path: '/sys-ctrl-x9k2-prime-7af3'
+      fullPath: '/sys-ctrl-x9k2-prime-7af3'
+      preLoaderRoute: typeof SysCtrlX9k2Prime7af3RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
   SettingsRoute: SettingsRoute,
+  SysCtrlX9k2Prime7af3Route: SysCtrlX9k2Prime7af3Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
