@@ -83,10 +83,10 @@ function DashboardPage() {
             >
               <div className="h-20 w-20 overflow-hidden rounded-[2rem] border-2 border-white/20 bg-charcoal/40 shadow-2xl backdrop-blur-md transition-all group-hover:border-ember/50">
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                  <img src={profile.avatar_url} alt={profile.display_name ?? ""} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="grid h-full w-full place-items-center bg-gradient-to-br from-charcoal to-background">
-                    <User className="h-10 w-10 text-muted-foreground" />
+                  <div className="grid h-full w-full place-items-center bg-gradient-to-br from-charcoal to-background font-display text-2xl text-foreground/70">
+                    {profile?.display_name?.split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]?.toUpperCase()).join("") || <User className="h-10 w-10 text-muted-foreground" />}
                   </div>
                 )}
               </div>
