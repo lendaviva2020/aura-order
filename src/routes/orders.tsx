@@ -17,6 +17,11 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
+import { UserAvatar } from "@/components/UserAvatar";
+
+const PAGE_SIZE = 10;
+const LS_LOADED_PAGES = "orders_loaded_pages";
 
 export const Route = createFileRoute("/orders")({
   component: OrdersHistoryPage,
@@ -107,12 +112,7 @@ function OrdersHistoryPage() {
     if (!authLoading && !user) navigate({ to: "/auth", search: { redirect: "/orders" } });
   }, [authLoading, user, navigate]);
 
-  const [pageSize, setPageSize] = useState(() => {
-    if (typeof window !== "undefined") {
-      return parseInt(localStorage.getItem("orders_page_size") || "10");
-    }
-    return 10;
-  });
+  const { data: profile } = useProfile();
 
   const {
     data,
@@ -128,25 +128,38 @@ function OrdersHistoryPage() {
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
         .order("placed_at", { ascending: false })
-        .range(pageParam as number, (pageParam as number) + pageSize - 1);
-      
+        .range(pageParam as number, (pageParam as number) + PAGE_SIZE - 1);
+
       if (error) throw error;
       return (data as any[]) ?? [];
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any[], allPages: any[]) => {
-      if (lastPage.length < pageSize) return undefined;
-      return allPages.length * pageSize;
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return allPages.length * PAGE_SIZE;
     },
     enabled: !!user,
   });
 
+  // Persist how many pages were loaded so reloads restore the exact same list
+  const loadedPages = data?.pages.length ?? 0;
   useEffect(() => {
-    if (data?.pages) {
-      const totalLoaded = data.pages.flat().length;
-      localStorage.setItem("orders_page_size", String(Math.max(10, totalLoaded)));
+    if (loadedPages > 0) {
+      localStorage.setItem(LS_LOADED_PAGES, String(loadedPages));
     }
-  }, [data]);
+  }, [loadedPages]);
+
+  // After first fetch, auto-load the previously saved number of pages
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    if (restored || !user || isLoading || !data) return;
+    const target = parseInt(localStorage.getItem(LS_LOADED_PAGES) || "1");
+    if (loadedPages < target && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    } else if (loadedPages >= target) {
+      setRestored(true);
+    }
+  }, [restored, user, isLoading, data, loadedPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
