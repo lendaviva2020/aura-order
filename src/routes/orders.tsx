@@ -331,13 +331,19 @@ function OrdersHistoryPage() {
         ) : (
           <div className="space-y-4">
             {filteredOrders?.map((order: any) => (
-              <DetailedOrderCard key={order.id} order={order} />
+              <DetailedOrderCard key={order.id} order={order} profile={profile} />
             ))}
           </div>
         )}
 
+        {(filteredOrders?.length ?? 0) > 0 && (
+          <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
+            Mostrando {filteredOrders.length} {filteredOrders.length === 1 ? "pedido" : "pedidos"} · {loadedPages} {loadedPages === 1 ? "página" : "páginas"}
+          </div>
+        )}
+
         {hasNextPage && (
-          <div className="mt-8 text-center">
+          <div className="mt-4 text-center">
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
@@ -352,7 +358,7 @@ function OrdersHistoryPage() {
   );
 }
 
-function DetailedOrderCard({ order }: { order: any }) {
+function DetailedOrderCard({ order, profile }: { order: any; profile?: any }) {
   const [expanded, setExpanded] = useState(false);
   const status = STATUS_MAP[order.status as string] || STATUS_MAP.received;
 
@@ -363,9 +369,13 @@ function DetailedOrderCard({ order }: { order: any }) {
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-4">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-background border border-border">
-            <History className="h-6 w-6 text-muted-foreground" />
-          </div>
+          <UserAvatar
+            url={profile?.avatar_url}
+            name={profile?.display_name}
+            className="h-12 w-12 rounded-2xl border border-border"
+            iconClassName="h-6 w-6"
+          />
+        </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-display text-lg">#{order.code}</span>
