@@ -44,7 +44,7 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: 
   { id: "tables", label: "Mesas", icon: Utensils },
 ];
 
-function AdminPage() {
+export function AdminPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: rolesLoading } = useRoles();
