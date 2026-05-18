@@ -375,7 +375,6 @@ function DetailedOrderCard({ order, profile }: { order: any; profile?: any }) {
             className="h-12 w-12 rounded-2xl border border-border"
             iconClassName="h-6 w-6"
           />
-        </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-display text-lg">#{order.code}</span>
