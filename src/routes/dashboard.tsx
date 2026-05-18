@@ -210,7 +210,14 @@ function DashboardPage() {
             </div>
             <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-foreground">Cardápio</span>
           </Link>
-          <NavIcon icon={User} label="Perfil" onClick={() => navigate({ to: "/settings" })} />
+          <button onClick={() => navigate({ to: "/settings" })} className="flex flex-col items-center gap-1 transition text-muted-foreground hover:text-foreground">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover ring-2 ring-border" />
+            ) : (
+              <User className="h-5 w-5" />
+            )}
+            <span className="text-[10px] font-black uppercase tracking-widest">Perfil</span>
+          </button>
         </div>
       </nav>
     </div>
