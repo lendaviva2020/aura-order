@@ -276,6 +276,7 @@ export type Database = {
           id: string
           phone: string | null
           updated_at: string
+          view_prefs: Json
         }
         Insert: {
           avatar_url?: string | null
@@ -284,6 +285,7 @@ export type Database = {
           id: string
           phone?: string | null
           updated_at?: string
+          view_prefs?: Json
         }
         Update: {
           avatar_url?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+          view_prefs?: Json
         }
         Relationships: []
       }
