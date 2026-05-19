@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { useCart, type CartItem } from "@/lib/cart-store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const searchSchema = z.object({
   table: z.string().optional(),
