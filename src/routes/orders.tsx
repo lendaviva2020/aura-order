@@ -190,7 +190,6 @@ function OrdersHistoryPage() {
         },
         async (payload) => {
           if (payload.eventType === "INSERT") {
-            // For new orders, we need to fetch the full object (including tables and items)
             const { data: fullOrder } = await supabase
               .from("orders")
               .select("*, order_items(*), tables(number)")
@@ -198,24 +197,37 @@ function OrdersHistoryPage() {
               .single();
 
             if (fullOrder) {
-              qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
-                const list = old || [];
-                // Avoid duplicates and keep sorted
-                if (list.some(o => o.id === fullOrder.id)) return list;
-                return [fullOrder, ...list];
+              qc.setQueryData(["all-user-orders", user.id], (old: any) => {
+                if (!old) return { pages: [[fullOrder]], pageParams: [null] };
+                
+                // Add to the beginning of the first page
+                const newPages = [...old.pages];
+                if (newPages.length > 0) {
+                  // Avoid duplicates
+                  if (!newPages.flat().some(o => o.id === fullOrder.id)) {
+                    newPages[0] = [fullOrder, ...newPages[0]];
+                  }
+                } else {
+                  newPages[0] = [fullOrder];
+                }
+                
+                return { ...old, pages: newPages };
               });
               toast.success(`Pedido #${fullOrder.code} criado com sucesso!`);
             }
           } else if (payload.eventType === "UPDATE") {
-            // Update the specific order in the query cache
-            qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
+            qc.setQueryData(["all-user-orders", user.id], (old: any) => {
               if (!old) return old;
-              return old.map((order) =>
-                order.id === payload.new.id ? { ...order, ...payload.new } : order
-              );
+              return {
+                ...old,
+                pages: old.pages.map((page: any[]) =>
+                  page.map((order) =>
+                    order.id === payload.new.id ? { ...order, ...payload.new } : order
+                  )
+                ),
+              };
             });
 
-            // Show toast for status change
             const statusLabel = STATUS_MAP[payload.new.status as string]?.label || payload.new.status;
             toast.info(`Pedido #${payload.new.code}: Status atualizado para ${statusLabel}`, {
               icon: <Clock className="h-4 w-4" />,
