@@ -122,21 +122,31 @@ function OrdersHistoryPage() {
     isLoading,
   } = useInfiniteQuery({
     queryKey: ["all-user-orders", user?.id],
-    queryFn: async ({ pageParam = 0 }) => {
-      const { data, error } = await supabase
+    queryFn: async ({ pageParam }) => {
+      let query = supabase
         .from("orders")
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
         .order("placed_at", { ascending: false })
-        .range(pageParam as number, (pageParam as number) + PAGE_SIZE - 1);
+        .order("id", { ascending: false })
+        .limit(PAGE_SIZE);
 
+      if (pageParam) {
+        const { placed_at, id } = pageParam as { placed_at: string; id: string };
+        // Cursor-based pagination: where (placed_at, id) < (last_placed_at, last_id)
+        // PostgREST or filter syntax for stable sorting
+        query = query.or(`placed_at.lt.${placed_at},and(placed_at.eq.${placed_at},id.lt.${id})`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage: any[], allPages: any[]) => {
+    initialPageParam: null as { placed_at: string; id: string } | null,
+    getNextPageParam: (lastPage: any[]) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
-      return allPages.length * PAGE_SIZE;
+      const lastItem = lastPage[lastPage.length - 1];
+      return { placed_at: lastItem.placed_at, id: lastItem.id };
     },
     enabled: !!user,
   });
