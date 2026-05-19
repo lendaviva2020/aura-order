@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { useCart, type CartItem } from "@/lib/cart-store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const searchSchema = z.object({
   table: z.string().optional(),
@@ -467,6 +469,7 @@ function CheckoutSheet({
   onConfirm: (id: string) => void;
 }) {
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -570,16 +573,29 @@ function CheckoutSheet({
         className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background"
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Mesa {tableData?.number ?? "??"} · Pagamento
+          <div className="flex items-center gap-3">
+            {user && (
+              <UserAvatar
+                url={profile?.avatar_url}
+                name={profile?.display_name ?? user.email ?? undefined}
+                className="h-11 w-11 rounded-2xl border border-border"
+                iconClassName="h-5 w-5"
+              />
+            )}
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                Mesa {tableData?.number ?? "??"} · Pagamento
+              </div>
+              <h3 className="font-display text-2xl">
+                {profile?.display_name ? `${profile.display_name.split(" ")[0]}, pague e confirme` : "Pague e confirme"}
+              </h3>
             </div>
-            <h3 className="font-display text-2xl">Pague e confirme</h3>
           </div>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-charcoal">
             <X className="h-5 w-5" />
           </button>
         </div>
+
 
         <div className="space-y-5 px-6 py-5">
           <section>
