@@ -469,6 +469,7 @@ function CheckoutSheet({
   onConfirm: (id: string) => void;
 }) {
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const [method, setMethod] = useState<"card" | "applepay" | "pix">("pix");
   const [paying, setPaying] = useState(false);
   const [couponCode, setCouponCode] = useState("");
