@@ -94,18 +94,6 @@ function OrdersHistoryPage() {
     return "date";
   });
   const qc = useQueryClient();
-
-  useEffect(() => {
-    localStorage.setItem("orders_filter", filter);
-  }, [filter]);
-
-  useEffect(() => {
-    localStorage.setItem("orders_sort_order", sortOrder);
-  }, [sortOrder]);
-
-  useEffect(() => {
-    localStorage.setItem("orders_sort_by", sortBy);
-  }, [sortBy]);
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -113,6 +101,31 @@ function OrdersHistoryPage() {
   }, [authLoading, user, navigate]);
 
   const { data: profile } = useProfile();
+
+  // Sync remote view_prefs (per user) — wins over localStorage so the same
+  // filter / sort / loaded-pages state follows the user across devices.
+  const remotePrefs = (profile?.view_prefs as any)?.orders as
+    | { filter?: string; sortOrder?: "desc" | "asc"; sortBy?: "date" | "status"; loadedPages?: number }
+    | undefined;
+
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
+  useEffect(() => {
+    if (!profile || prefsHydrated) return;
+    if (remotePrefs?.filter) setFilter(remotePrefs.filter);
+    if (remotePrefs?.sortOrder) setSortOrder(remotePrefs.sortOrder);
+    if (remotePrefs?.sortBy) setSortBy(remotePrefs.sortBy);
+    setPrefsHydrated(true);
+  }, [profile, prefsHydrated, remotePrefs?.filter, remotePrefs?.sortOrder, remotePrefs?.sortBy]);
+
+  useEffect(() => {
+    localStorage.setItem("orders_filter", filter);
+  }, [filter]);
+  useEffect(() => {
+    localStorage.setItem("orders_sort_order", sortOrder);
+  }, [sortOrder]);
+  useEffect(() => {
+    localStorage.setItem("orders_sort_by", sortBy);
+  }, [sortBy]);
 
   const {
     data,
@@ -133,8 +146,6 @@ function OrdersHistoryPage() {
 
       if (pageParam) {
         const { placed_at, id } = pageParam as { placed_at: string; id: string };
-        // Cursor-based pagination: where (placed_at, id) < (last_placed_at, last_id)
-        // We use double quotes for ISO strings in the OR filter to be safe
         query = query.or(`placed_at.lt."${placed_at}",and(placed_at.eq."${placed_at}",id.lt."${id}")`);
       }
 
@@ -151,23 +162,50 @@ function OrdersHistoryPage() {
     enabled: !!user,
   });
 
-  // Persist how many pages were loaded so reloads restore the exact same list
   const loadedPages = data?.pages.length ?? 0;
+
+  // Persist view prefs (incl. loaded pages) both locally AND on the profile
+  // so reload + cross-device both restore exactly the same state.
   useEffect(() => {
-    if (loadedPages > 0) {
-      localStorage.setItem(LS_LOADED_PAGES, String(loadedPages));
-    }
+    if (loadedPages > 0) localStorage.setItem(LS_LOADED_PAGES, String(loadedPages));
   }, [loadedPages]);
 
+  useEffect(() => {
+    if (!user || !prefsHydrated) return;
+    const next = { filter, sortOrder, sortBy, loadedPages };
+    const prev = remotePrefs ?? {};
+    if (
+      prev.filter === next.filter &&
+      prev.sortOrder === next.sortOrder &&
+      prev.sortBy === next.sortBy &&
+      (prev.loadedPages ?? 0) === next.loadedPages
+    ) return;
+
+    const t = setTimeout(() => {
+      const merged = { ...((profile?.view_prefs as any) ?? {}), orders: next };
+      supabase
+        .from("profiles")
+        .update({ view_prefs: merged })
+        .eq("id", user.id)
+        .then(({ error }) => {
+          if (!error) qc.invalidateQueries({ queryKey: ["profile", user.id] });
+        });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [user, prefsHydrated, filter, sortOrder, sortBy, loadedPages, profile?.view_prefs, remotePrefs, qc]);
+
   // After first fetch, auto-load the previously saved number of pages
+  // (prefer remote prefs over localStorage).
   const [restored, setRestored] = useState(false);
   useEffect(() => {
     if (restored || !user || isLoading || !data) return;
-    const target = parseInt(localStorage.getItem(LS_LOADED_PAGES) || "1");
+    const target =
+      remotePrefs?.loadedPages ?? parseInt(localStorage.getItem(LS_LOADED_PAGES) || "1");
     if (loadedPages < target && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     } else if (loadedPages >= target) {
       setRestored(true);
+
     }
   }, [restored, user, isLoading, data, loadedPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
