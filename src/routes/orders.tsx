@@ -122,21 +122,31 @@ function OrdersHistoryPage() {
     isLoading,
   } = useInfiniteQuery({
     queryKey: ["all-user-orders", user?.id],
-    queryFn: async ({ pageParam = 0 }) => {
-      const { data, error } = await supabase
+    queryFn: async ({ pageParam }) => {
+      let query = supabase
         .from("orders")
         .select("*, order_items(*), tables(number)")
         .eq("customer_id", user!.id)
         .order("placed_at", { ascending: false })
-        .range(pageParam as number, (pageParam as number) + PAGE_SIZE - 1);
+        .order("id", { ascending: false })
+        .limit(PAGE_SIZE);
 
+      if (pageParam) {
+        const { placed_at, id } = pageParam as { placed_at: string; id: string };
+        // Cursor-based pagination: where (placed_at, id) < (last_placed_at, last_id)
+        // We use double quotes for ISO strings in the OR filter to be safe
+        query = query.or(`placed_at.lt."${placed_at}",and(placed_at.eq."${placed_at}",id.lt."${id}")`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage: any[], allPages: any[]) => {
+    initialPageParam: null as { placed_at: string; id: string } | null,
+    getNextPageParam: (lastPage: any[]) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
-      return allPages.length * PAGE_SIZE;
+      const lastItem = lastPage[lastPage.length - 1];
+      return { placed_at: lastItem.placed_at, id: lastItem.id };
     },
     enabled: !!user,
   });
@@ -180,7 +190,6 @@ function OrdersHistoryPage() {
         },
         async (payload) => {
           if (payload.eventType === "INSERT") {
-            // For new orders, we need to fetch the full object (including tables and items)
             const { data: fullOrder } = await supabase
               .from("orders")
               .select("*, order_items(*), tables(number)")
@@ -188,24 +197,37 @@ function OrdersHistoryPage() {
               .single();
 
             if (fullOrder) {
-              qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
-                const list = old || [];
-                // Avoid duplicates and keep sorted
-                if (list.some(o => o.id === fullOrder.id)) return list;
-                return [fullOrder, ...list];
+              qc.setQueryData(["all-user-orders", user.id], (old: any) => {
+                if (!old) return { pages: [[fullOrder]], pageParams: [null] };
+                
+                // Add to the beginning of the first page
+                const newPages = [...old.pages];
+                if (newPages.length > 0) {
+                  // Avoid duplicates
+                  if (!newPages.flat().some(o => o.id === fullOrder.id)) {
+                    newPages[0] = [fullOrder, ...newPages[0]];
+                  }
+                } else {
+                  newPages[0] = [fullOrder];
+                }
+                
+                return { ...old, pages: newPages };
               });
               toast.success(`Pedido #${fullOrder.code} criado com sucesso!`);
             }
           } else if (payload.eventType === "UPDATE") {
-            // Update the specific order in the query cache
-            qc.setQueryData(["all-user-orders", user.id], (old: any[] | undefined) => {
+            qc.setQueryData(["all-user-orders", user.id], (old: any) => {
               if (!old) return old;
-              return old.map((order) =>
-                order.id === payload.new.id ? { ...order, ...payload.new } : order
-              );
+              return {
+                ...old,
+                pages: old.pages.map((page: any[]) =>
+                  page.map((order) =>
+                    order.id === payload.new.id ? { ...order, ...payload.new } : order
+                  )
+                ),
+              };
             });
 
-            // Show toast for status change
             const statusLabel = STATUS_MAP[payload.new.status as string]?.label || payload.new.status;
             toast.info(`Pedido #${payload.new.code}: Status atualizado para ${statusLabel}`, {
               icon: <Clock className="h-4 w-4" />,
