@@ -134,8 +134,8 @@ function OrdersHistoryPage() {
       if (pageParam) {
         const { placed_at, id } = pageParam as { placed_at: string; id: string };
         // Cursor-based pagination: where (placed_at, id) < (last_placed_at, last_id)
-        // PostgREST or filter syntax for stable sorting
-        query = query.or(`placed_at.lt.${placed_at},and(placed_at.eq.${placed_at},id.lt.${id})`);
+        // We use double quotes for ISO strings in the OR filter to be safe
+        query = query.or(`placed_at.lt."${placed_at}",and(placed_at.eq."${placed_at}",id.lt."${id}")`);
       }
 
       const { data, error } = await query;
