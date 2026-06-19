@@ -58,37 +58,50 @@ function SettingsPage() {
   }, [profile]);
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    try {
-      setUploading(true);
-      if (!e.target.files || e.target.files.length === 0) return;
-      const file = e.target.files[0];
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user!.id}/${Math.random()}.${fileExt}`;
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const previousUrl = profile?.avatar_url ?? null;
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user!.id}/${crypto.randomUUID()}.${fileExt}`;
+    let uploadedPath: string | null = null;
 
+    setUploading(true);
+    // Optimistic update so the new image appears immediately
+    try {
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file);
-
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
       if (uploadError) throw uploadError;
+      uploadedPath = filePath;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
         .eq("id", user!.id);
-
       if (updateError) throw updateError;
 
-      qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+      await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
       toast.success("Foto de perfil atualizada!");
     } catch (error) {
-      toast.error("Erro ao carregar imagem");
-      console.error(error);
+      console.error("[avatar-upload]", error);
+      // Rollback: remove the uploaded file and restore previous avatar in DB
+      if (uploadedPath) {
+        await supabase.storage.from("avatars").remove([uploadedPath]).catch(() => {});
+      }
+      try {
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: previousUrl })
+          .eq("id", user!.id);
+      } catch {/* best-effort */}
+      await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+      toast.error("Falha ao atualizar foto — avatar anterior restaurado.");
     } finally {
       setUploading(false);
+      // Reset input so selecting the same file again re-triggers change
+      if (e.target) e.target.value = "";
     }
   }
 
