@@ -41,15 +41,15 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link
-            to="/dashboard"
-            className="hidden items-center gap-1.5 rounded-full border border-border bg-charcoal/60 px-4 py-2 text-sm font-semibold text-foreground backdrop-blur transition hover:bg-charcoal sm:inline-flex"
+            to="/auth"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-charcoal/60 px-3 py-2 text-xs font-semibold text-foreground backdrop-blur transition hover:bg-charcoal sm:px-4 sm:text-sm"
           >
-            <User className="h-4 w-4" /> Minha Conta
+            <LogIn className="h-4 w-4" /> Entrar
           </Link>
           <Link
             to="/menu"
             search={{ table: "12" }}
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:scale-[1.03] shadow-ember"
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03] shadow-ember sm:px-5 sm:py-2.5 sm:text-sm"
           >
             Testar demo
           </Link>

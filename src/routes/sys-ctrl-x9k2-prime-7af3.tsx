@@ -32,7 +32,7 @@ function GuardedAdminPage() {
     }
   }, [authLoading, user, navigate]);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["server-admin-check", user?.id],
     queryFn: () => checkAdmin(),
     enabled: !!user,
@@ -51,15 +51,21 @@ function GuardedAdminPage() {
   if (!user) return null;
 
   if (isError || !data?.ok) {
+    const errMsg = error instanceof Error ? error.message : "";
+    const rateLimited = /RATE_LIMITED/i.test(errMsg);
     return (
       <div className="grid min-h-screen place-items-center bg-background px-6">
         <div className="max-w-sm rounded-3xl border border-border bg-charcoal/60 p-8 text-center">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-500/15">
             <ShieldOff className="h-7 w-7 text-red-400" />
           </div>
-          <h1 className="mt-5 font-display text-2xl">Acesso negado</h1>
+          <h1 className="mt-5 font-display text-2xl">
+            {rateLimited ? "Acesso bloqueado temporariamente" : "Acesso negado"}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Esta área requer privilégios de administrador validados pelo servidor.
+            {rateLimited
+              ? "Muitas tentativas recentes. Aguarde alguns minutos e tente novamente."
+              : "Esta área requer privilégios de administrador validados pelo servidor. Esta tentativa foi registrada."}
           </p>
           <Link
             to="/"

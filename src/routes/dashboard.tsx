@@ -195,7 +195,7 @@ function DashboardPage() {
               <h2 className="font-display text-xl uppercase tracking-widest">Acompanhar Pedido</h2>
               <Link to="/orders" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
             </div>
-            <OrderLiveCard order={recentOrders[0]} />
+            <OrderLiveCard order={recentOrders[0]} profile={profile} />
           </section>
         )}
       </main>
@@ -257,7 +257,7 @@ function NavIcon({ icon: Icon, label, active, onClick }: any) {
   );
 }
 
-function OrderLiveCard({ order }: { order: any }) {
+function OrderLiveCard({ order, profile }: { order: any; profile?: any }) {
   const statusLabels: Record<string, { label: string, color: string, progress: number }> = {
     received: { label: "Recebido", color: "text-ember", progress: 25 },
     preparing: { label: "Na Cozinha", color: "text-amber-400", progress: 50 },
@@ -268,13 +268,25 @@ function OrderLiveCard({ order }: { order: any }) {
   };
 
   const status = statusLabels[order.status as string] || statusLabels.received;
+  const initials = profile?.display_name?.split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]?.toUpperCase()).join("") || "";
 
   return (
     <div className="group rounded-[2rem] border border-white/5 bg-gradient-to-br from-charcoal/50 to-background p-6 transition hover:border-white/10 shadow-soft">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="grid h-14 w-14 place-items-center rounded-[1.2rem] bg-background border border-white/5">
-            <History className="h-7 w-7 text-muted-foreground group-hover:text-ember transition" />
+          <div className="relative h-14 w-14 shrink-0">
+            <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-[1.2rem] bg-background border border-white/5">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : initials ? (
+                <span className="font-display text-base text-foreground/80">{initials}</span>
+              ) : (
+                <History className="h-7 w-7 text-muted-foreground group-hover:text-ember transition" />
+              )}
+            </div>
+            <div className={`absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-background border border-white/10 ${status.color}`}>
+              <span className={`h-2 w-2 rounded-full ${status.color.replace('text', 'bg')} animate-pulse`} />
+            </div>
           </div>
           <div>
             <div className="font-display text-2xl tracking-tight">#{order.code}</div>
