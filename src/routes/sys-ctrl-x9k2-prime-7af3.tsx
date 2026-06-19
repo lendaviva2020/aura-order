@@ -32,7 +32,7 @@ function GuardedAdminPage() {
     }
   }, [authLoading, user, navigate]);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["server-admin-check", user?.id],
     queryFn: () => checkAdmin(),
     enabled: !!user,
