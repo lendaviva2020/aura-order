@@ -195,7 +195,7 @@ function DashboardPage() {
               <h2 className="font-display text-xl uppercase tracking-widest">Acompanhar Pedido</h2>
               <Link to="/orders" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground">Ver todos</Link>
             </div>
-            <OrderLiveCard order={recentOrders[0]} />
+            <OrderLiveCard order={recentOrders[0]} profile={profile} />
           </section>
         )}
       </main>
