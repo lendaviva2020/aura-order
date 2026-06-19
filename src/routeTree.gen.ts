@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SysCtrlX9k2Prime7af3RouteImport } from './routes/sys-ctrl-x9k2-prime-7af3'
+import { Route as SysCtrlX9k2Audit7af3RouteImport } from './routes/sys-ctrl-x9k2-audit-7af3'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -23,6 +24,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SysCtrlX9k2Prime7af3Route = SysCtrlX9k2Prime7af3RouteImport.update({
   id: '/sys-ctrl-x9k2-prime-7af3',
   path: '/sys-ctrl-x9k2-prime-7af3',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SysCtrlX9k2Audit7af3Route = SysCtrlX9k2Audit7af3RouteImport.update({
+  id: '/sys-ctrl-x9k2-audit-7af3',
+  path: '/sys-ctrl-x9k2-audit-7af3',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-audit-7af3': typeof SysCtrlX9k2Audit7af3Route
   '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-audit-7af3': typeof SysCtrlX9k2Audit7af3Route
   '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/settings': typeof SettingsRoute
+  '/sys-ctrl-x9k2-audit-7af3': typeof SysCtrlX9k2Audit7af3Route
   '/sys-ctrl-x9k2-prime-7af3': typeof SysCtrlX9k2Prime7af3Route
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-audit-7af3'
     | '/sys-ctrl-x9k2-prime-7af3'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-audit-7af3'
     | '/sys-ctrl-x9k2-prime-7af3'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/settings'
+    | '/sys-ctrl-x9k2-audit-7af3'
     | '/sys-ctrl-x9k2-prime-7af3'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
   SettingsRoute: typeof SettingsRoute
+  SysCtrlX9k2Audit7af3Route: typeof SysCtrlX9k2Audit7af3Route
   SysCtrlX9k2Prime7af3Route: typeof SysCtrlX9k2Prime7af3Route
 }
 
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/sys-ctrl-x9k2-prime-7af3'
       fullPath: '/sys-ctrl-x9k2-prime-7af3'
       preLoaderRoute: typeof SysCtrlX9k2Prime7af3RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sys-ctrl-x9k2-audit-7af3': {
+      id: '/sys-ctrl-x9k2-audit-7af3'
+      path: '/sys-ctrl-x9k2-audit-7af3'
+      fullPath: '/sys-ctrl-x9k2-audit-7af3'
+      preLoaderRoute: typeof SysCtrlX9k2Audit7af3RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
   SettingsRoute: SettingsRoute,
+  SysCtrlX9k2Audit7af3Route: SysCtrlX9k2Audit7af3Route,
   SysCtrlX9k2Prime7af3Route: SysCtrlX9k2Prime7af3Route,
 }
 export const routeTree = rootRouteImport

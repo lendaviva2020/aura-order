@@ -60,33 +60,68 @@ function SettingsPage() {
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    // Client-side validation — fail fast before touching network
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem válido.");
+      if (e.target) e.target.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 5MB).");
+      if (e.target) e.target.value = "";
+      return;
+    }
+
     const previousUrl = profile?.avatar_url ?? null;
-    const fileExt = file.name.split(".").pop();
+    const fileExt = (file.name.split(".").pop() || "jpg").toLowerCase();
     const filePath = `${user!.id}/${crypto.randomUUID()}.${fileExt}`;
     let uploadedPath: string | null = null;
 
+    // Retry helper with exponential backoff for intermittent network failures.
+    // Previous avatar stays in DB + UI until the new one is fully committed.
+    async function withRetry<T>(label: string, fn: () => Promise<T>, attempts = 3): Promise<T> {
+      let lastErr: unknown;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          return await fn();
+        } catch (err) {
+          lastErr = err;
+          console.warn(`[avatar-upload] ${label} tentativa ${i + 1}/${attempts} falhou`, err);
+          if (i < attempts - 1) {
+            await new Promise((r) => setTimeout(r, 400 * Math.pow(2, i)));
+          }
+        }
+      }
+      throw lastErr;
+    }
+
     setUploading(true);
-    // Optimistic update so the new image appears immediately
+    const pendingToast = toast.loading("Enviando foto…");
     try {
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { cacheControl: "3600", upsert: false });
-      if (uploadError) throw uploadError;
+      await withRetry("storage.upload", async () => {
+        const { error } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file, { cacheControl: "3600", upsert: false });
+        if (error) throw error;
+      });
       uploadedPath = filePath;
 
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user!.id);
-      if (updateError) throw updateError;
+      await withRetry("profiles.update", async () => {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: publicUrl })
+          .eq("id", user!.id);
+        if (error) throw error;
+      });
 
       await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
-      toast.success("Foto de perfil atualizada!");
+      toast.success("Foto de perfil atualizada!", { id: pendingToast });
     } catch (error) {
-      console.error("[avatar-upload]", error);
-      // Rollback: remove the uploaded file and restore previous avatar in DB
+      console.error("[avatar-upload] falha após retries", error);
+      // Rollback: remove orphan file and restore previous avatar in DB
       if (uploadedPath) {
         await supabase.storage.from("avatars").remove([uploadedPath]).catch(() => {});
       }
@@ -97,10 +132,9 @@ function SettingsPage() {
           .eq("id", user!.id);
       } catch {/* best-effort */}
       await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
-      toast.error("Falha ao atualizar foto — avatar anterior restaurado.");
+      toast.error("Falha no envio — sua foto anterior foi mantida.", { id: pendingToast });
     } finally {
       setUploading(false);
-      // Reset input so selecting the same file again re-triggers change
       if (e.target) e.target.value = "";
     }
   }
