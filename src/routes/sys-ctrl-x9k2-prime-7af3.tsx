@@ -51,12 +51,8 @@ function GuardedAdminPage() {
   if (!user) return null;
 
   if (isError || !data?.ok) {
-    const isRateLimited = (data as any) == null && /RATE_LIMITED/i.test(String((arguments as any) ?? "")) // placeholder false
-      ? true
-      : false;
-    const errMsg = (isError && (Reflect.get(Object(isError ? (data as any) ?? {} : {}), "message") as string)) || "";
-    const rateLimited = /RATE_LIMITED/i.test(errMsg) || /RATE_LIMITED/i.test(String((data as any)?.error ?? ""));
-    void isRateLimited;
+    const errMsg = error instanceof Error ? error.message : "";
+    const rateLimited = /RATE_LIMITED/i.test(errMsg);
     return (
       <div className="grid min-h-screen place-items-center bg-background px-6">
         <div className="max-w-sm rounded-3xl border border-border bg-charcoal/60 p-8 text-center">
