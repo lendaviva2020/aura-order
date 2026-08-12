@@ -12,4 +12,22 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (
+              id.includes("@supabase/") ||
+              id.includes("/node_modules/postgrest-js/") ||
+              id.includes("/node_modules/realtime-js/")
+            ) {
+              return "supabase";
+            }
+            return undefined;
+          },
+        },
+      },
+    },
+  },
 });
