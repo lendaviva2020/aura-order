@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -22,7 +21,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { useRoles } from "@/hooks/use-roles";
-import { claimFirstAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
