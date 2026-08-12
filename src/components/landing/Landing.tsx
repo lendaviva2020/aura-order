@@ -46,13 +46,6 @@ function Nav() {
           >
             <LogIn className="h-4 w-4" /> Entrar
           </Link>
-          <Link
-            to="/menu"
-            search={{ table: "12" }}
-            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:scale-[1.03] shadow-ember sm:px-5 sm:py-2.5 sm:text-sm"
-          >
-            Testar demo
-          </Link>
         </div>
       </div>
     </header>
