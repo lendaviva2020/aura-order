@@ -387,16 +387,15 @@ function CTA() {
             Acenda seu <span className="text-gradient-ember">restaurante.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            Teste o fluxo do cliente agora — sem cadastro, sem instalar nada.
+            Escaneie o QR Code da sua mesa e faça seu pedido em segundos.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
-              to="/menu"
-              search={{ table: "12" }}
+              to="/auth"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-ember transition hover:scale-[1.03]"
             >
               <QrCode className="h-5 w-5" />
-              Abrir demo da mesa 12
+              Entrar na minha conta
             </Link>
             <a
               href="https://wa.me/15555555555"
