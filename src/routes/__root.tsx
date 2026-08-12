@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -7,9 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+
+const AuthListener = lazy(() => import("@/components/AuthListener"));
 
 import appCss from "../styles.css?url";
 
@@ -123,24 +124,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthListener router={router} />
+      <ClientAuthListener />
       <Outlet />
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
 }
 
-function AuthListener({ router }: { router: ReturnType<typeof useRouter> }) {
-  const qc = useQueryClient();
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      router.invalidate();
-      qc.invalidateQueries();
-    });
-    return () => subscription.unsubscribe();
-  }, [router, qc]);
-  return null;
+function ClientAuthListener() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return (
+    <Suspense fallback={null}>
+      <AuthListener />
+    </Suspense>
+  );
 }
