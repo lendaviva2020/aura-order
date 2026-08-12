@@ -129,26 +129,6 @@ function CenterShell({ children }: { children: React.ReactNode }) {
 }
 
 function NotAdmin() {
-  const claim = useServerFn(claimFirstAdmin);
-  const qc = useQueryClient();
-  const [loading, setLoading] = useState(false);
-  async function handleClaim() {
-    setLoading(true);
-    try {
-      const res = await claim();
-      if (res.promoted) {
-        toast.success("Você agora é admin!");
-        qc.invalidateQueries();
-        window.location.reload();
-      } else {
-        toast.error("Já existe um admin neste projeto.");
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao promover");
-    } finally {
-      setLoading(false);
-    }
-  }
   return (
     <div className="grid min-h-screen place-items-center bg-background px-5">
       <div className="max-w-md rounded-3xl border border-border bg-charcoal/60 p-8 text-center">
@@ -157,17 +137,10 @@ function NotAdmin() {
         </div>
         <h1 className="mt-5 font-display text-3xl">Acesso restrito</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sua conta não tem perfil de administrador. Se você é o primeiro usuário
-          deste restaurante, reivindique o acesso de admin abaixo.
+          Esta área é exclusiva do administrador da conta. Sua tentativa de
+          acesso foi registrada.
         </p>
-        <button
-          onClick={handleClaim}
-          disabled={loading}
-          className="mt-6 w-full rounded-full bg-primary py-3 font-bold uppercase tracking-wider text-primary-foreground shadow-ember disabled:opacity-50"
-        >
-          {loading ? "Validando…" : "Sou o primeiro admin"}
-        </button>
-        <Link to="/" className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/" className="mt-6 inline-block text-sm text-muted-foreground hover:text-foreground">
           Voltar ao site
         </Link>
       </div>
