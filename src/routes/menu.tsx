@@ -58,7 +58,12 @@ function MenuPage() {
   const [activeCatId, setActiveCatId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("browsing");
-  const [orderId, setOrderId] = useState<string | null>(() => localStorage.getItem("ember_active_order"));
+  const [orderId, setOrderId] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrderId(window.localStorage.getItem("ember_active_order"));
+    }
+  }, []);
   
   const { data: tableData, isLoading: tableLoading } = useQuery({
     queryKey: ["table", qrToken],
