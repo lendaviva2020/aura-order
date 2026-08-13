@@ -239,11 +239,11 @@ function HowItWorks() {
 }
 
 function Showcase() {
-  const items = [
-    { img: productDouble, name: "Double Stack", price: "R$ 39,90" },
-    { img: heroBurger, name: "Ember Classic", price: "R$ 32,50" },
-    { img: productFries, name: "Fritas Ember", price: "R$ 18,50" },
-    { img: productShake, name: "Inferno Shake", price: "R$ 22,90" },
+  const items: Array<{ img: Picture; name: string; price: string }> = [
+    { img: productDouble as Picture, name: "Double Stack", price: "R$ 39,90" },
+    { img: heroBurger as Picture, name: "Ember Classic", price: "R$ 32,50" },
+    { img: productFries as Picture, name: "Fritas Ember", price: "R$ 18,50" },
+    { img: productShake as Picture, name: "Inferno Shake", price: "R$ 22,90" },
   ];
   return (
     <section id="menu" className="relative mx-auto max-w-7xl px-6 py-28">
@@ -271,12 +271,20 @@ function Showcase() {
             className="group overflow-hidden rounded-3xl border border-border bg-charcoal/50"
           >
             <div className="aspect-square overflow-hidden bg-charcoal">
-              <img
-                src={it.img}
-                alt={it.name}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-              />
+              <picture>
+                {Object.entries(it.img.sources).map(([format, srcset]) => (
+                  <source key={format} type={`image/${format}`} srcSet={srcset} />
+                ))}
+                <img
+                  src={it.img.img.src}
+                  alt={it.name}
+                  width={768}
+                  height={768}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+              </picture>
             </div>
             <div className="flex items-center justify-between p-5">
               <div>
