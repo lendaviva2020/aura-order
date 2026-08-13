@@ -19,6 +19,10 @@ export default defineConfig({
           manualChunks(id: string) {
             if (
               id.includes("@supabase/") ||
+              id.includes("/src/integrations/supabase/client.ts") ||
+              id.includes("/src/hooks/use-auth") ||
+              id.includes("/src/hooks/use-roles") ||
+              id.includes("/src/hooks/use-profile") ||
               id.includes("/node_modules/postgrest-js/") ||
               id.includes("/node_modules/realtime-js/")
             ) {
