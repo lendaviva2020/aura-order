@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Flame, QrCode, ShoppingBag, Sparkles, Timer, Utensils, LogIn, User } from "lucide-react";
-import heroBurger from "@/assets/hero-burger.jpg";
-import productDouble from "@/assets/product-double.jpg";
-import productFries from "@/assets/product-fries.jpg";
-import productShake from "@/assets/product-shake.jpg";
+import heroBurger from "@/assets/hero-burger.jpg?w=1920&format=webp;jpg&as=picture";
+import productDouble from "@/assets/product-double.jpg?w=768&format=webp;jpg&as=picture";
+import productFries from "@/assets/product-fries.jpg?w=768&format=webp;jpg&as=picture";
+import productShake from "@/assets/product-shake.jpg?w=768&format=webp;jpg&as=picture";
+
+type Picture = {
+  sources: Record<string, string>;
+  img: { src: string; w: number; h: number };
+};
 
 export function Landing() {
   return (
@@ -115,13 +120,20 @@ function Hero() {
           className="relative"
         >
           <div className="absolute -inset-10 rounded-full bg-ember/30 blur-3xl animate-ember-pulse" />
-          <img
-            src={heroBurger}
-            alt="Hambúrguer Ember Classic"
-            width={1536}
-            height={1536}
-            className="relative w-full rounded-3xl object-cover shadow-soft"
-          />
+          <picture>
+            {Object.entries((heroBurger as Picture).sources).map(([format, srcset]) => (
+              <source key={format} type={`image/${format}`} srcSet={srcset} />
+            ))}
+            <img
+              src={(heroBurger as Picture).img.src}
+              alt="Hambúrguer Ember Classic"
+              width={1920}
+              height={1080}
+              fetchPriority="high"
+              decoding="async"
+              className="relative w-full rounded-3xl object-cover shadow-soft"
+            />
+          </picture>
           <FloatingCard className="absolute -left-4 top-12 hidden md:flex" delay={0.6}>
             <Timer className="h-5 w-5 text-ember" />
             <div>
@@ -227,11 +239,11 @@ function HowItWorks() {
 }
 
 function Showcase() {
-  const items = [
-    { img: productDouble, name: "Double Stack", price: "R$ 39,90" },
-    { img: heroBurger, name: "Ember Classic", price: "R$ 32,50" },
-    { img: productFries, name: "Fritas Ember", price: "R$ 18,50" },
-    { img: productShake, name: "Inferno Shake", price: "R$ 22,90" },
+  const items: Array<{ img: Picture; name: string; price: string }> = [
+    { img: productDouble as Picture, name: "Double Stack", price: "R$ 39,90" },
+    { img: heroBurger as Picture, name: "Ember Classic", price: "R$ 32,50" },
+    { img: productFries as Picture, name: "Fritas Ember", price: "R$ 18,50" },
+    { img: productShake as Picture, name: "Inferno Shake", price: "R$ 22,90" },
   ];
   return (
     <section id="menu" className="relative mx-auto max-w-7xl px-6 py-28">
@@ -259,12 +271,20 @@ function Showcase() {
             className="group overflow-hidden rounded-3xl border border-border bg-charcoal/50"
           >
             <div className="aspect-square overflow-hidden bg-charcoal">
-              <img
-                src={it.img}
-                alt={it.name}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-              />
+              <picture>
+                {Object.entries(it.img.sources).map(([format, srcset]) => (
+                  <source key={format} type={`image/${format}`} srcSet={srcset} />
+                ))}
+                <img
+                  src={it.img.img.src}
+                  alt={it.name}
+                  width={768}
+                  height={768}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+              </picture>
             </div>
             <div className="flex items-center justify-between p-5">
               <div>
