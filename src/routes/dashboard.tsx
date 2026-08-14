@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth, signOut } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/dashboard")({
