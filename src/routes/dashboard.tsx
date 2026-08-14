@@ -132,37 +132,9 @@ function DashboardPage() {
       <main className="relative mx-auto -mt-16 max-w-2xl px-6">
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Wallet/Loyalty Card */}
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
-            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-ember/5 blur-xl" />
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-ember">
-              <Wallet className="h-3 w-3" /> Saldo
-            </div>
-            <div className="mt-3 flex items-baseline gap-1.5">
-              <span className="font-display text-4xl text-gradient-ember">1.420</span>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">faíscas</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground">Nível Prata</span>
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            </div>
-          </section>
-
-          {/* Next Reward Card */}
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
-            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-emerald-500/5 blur-xl" />
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
-              <Ticket className="h-3 w-3" /> Resgate
-            </div>
-            <div className="mt-3">
-              <div className="text-sm font-bold">1 Milkshake</div>
-              <div className="text-[10px] text-muted-foreground">Faltam 380 faíscas</div>
-            </div>
-            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-background/50">
-              <div className="h-full w-[65%] rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-            </div>
-          </section>
+          <LoyaltyCards userId={user.id} />
         </div>
+
 
         {/* Action Menu */}
         <div className="mt-8 grid grid-cols-1 gap-3">
