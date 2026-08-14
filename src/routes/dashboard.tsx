@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth, signOut } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/dashboard")({
@@ -132,37 +133,9 @@ function DashboardPage() {
       <main className="relative mx-auto -mt-16 max-w-2xl px-6">
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Wallet/Loyalty Card */}
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
-            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-ember/5 blur-xl" />
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-ember">
-              <Wallet className="h-3 w-3" /> Saldo
-            </div>
-            <div className="mt-3 flex items-baseline gap-1.5">
-              <span className="font-display text-4xl text-gradient-ember">1.420</span>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">faíscas</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground">Nível Prata</span>
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            </div>
-          </section>
-
-          {/* Next Reward Card */}
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
-            <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-emerald-500/5 blur-xl" />
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
-              <Ticket className="h-3 w-3" /> Resgate
-            </div>
-            <div className="mt-3">
-              <div className="text-sm font-bold">1 Milkshake</div>
-              <div className="text-[10px] text-muted-foreground">Faltam 380 faíscas</div>
-            </div>
-            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-background/50">
-              <div className="h-full w-[65%] rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-            </div>
-          </section>
+          <LoyaltyCards userId={user.id} />
         </div>
+
 
         {/* Action Menu */}
         <div className="mt-8 grid grid-cols-1 gap-3">
@@ -223,6 +196,127 @@ function DashboardPage() {
     </div>
   );
 }
+
+const TIER_LABEL: Record<string, string> = {
+  bronze: "Nível Bronze",
+  prata: "Nível Prata",
+  ouro: "Nível Ouro",
+};
+
+type LoyaltyAccount = Pick<
+  Database["public"]["Tables"]["loyalty_accounts"]["Row"],
+  "points_balance" | "tier"
+>;
+type LoyaltyReward = Pick<
+  Database["public"]["Tables"]["loyalty_rewards"]["Row"],
+  "id" | "name" | "cost_points"
+>;
+
+function LoyaltyCards({ userId }: { userId: string }) {
+  const { data: account, isPending: accountLoading } = useQuery<LoyaltyAccount>({
+    queryKey: ["loyalty-account", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_accounts")
+        .select("points_balance, tier")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? { points_balance: 0, tier: "bronze" };
+    },
+  });
+
+  const { data: rewards, isPending: rewardsLoading } = useQuery<LoyaltyReward[]>({
+    queryKey: ["loyalty-rewards"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_rewards")
+        .select("id, name, cost_points")
+        .eq("active", true)
+        .order("cost_points", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const loading = accountLoading || rewardsLoading;
+  const points = account?.points_balance ?? 0;
+  const nextReward = useMemo(
+    () => rewards?.find((r) => r.cost_points > points) ?? null,
+    [rewards, points],
+  );
+  const progress = nextReward
+    ? Math.min(100, Math.round((points / nextReward.cost_points) * 100))
+    : 100;
+
+  if (loading) {
+    return (
+      <>
+        <LoyaltySkeleton />
+        <LoyaltySkeleton />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
+        <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-ember/5 blur-xl" />
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-ember">
+          <Wallet className="h-3 w-3" /> Saldo
+        </div>
+        <div className="mt-3 flex items-baseline gap-1.5">
+          <span className="font-display text-4xl text-gradient-ember">
+            {points.toLocaleString("pt-BR")}
+          </span>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">faíscas</span>
+        </div>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-muted-foreground">
+            {TIER_LABEL[account?.tier ?? "bronze"]}
+          </span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl transition hover:border-ember/20">
+        <div className="absolute -right-4 -top-4 grid h-20 w-20 place-items-center rounded-full bg-emerald-500/5 blur-xl" />
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+          <Ticket className="h-3 w-3" /> Resgate
+        </div>
+        <div className="mt-3">
+          <div className="text-sm font-bold">
+            {nextReward ? nextReward.name : rewards?.length ? "Tudo liberado!" : "Em breve"}
+          </div>
+          <div className="text-[10px] text-muted-foreground">
+            {nextReward
+              ? `Faltam ${(nextReward.cost_points - points).toLocaleString("pt-BR")} faíscas`
+              : rewards?.length
+                ? "Você pode resgatar qualquer recompensa"
+                : "Novas recompensas chegando"}
+          </div>
+        </div>
+        <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-background/50">
+          <div
+            className="h-full rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-700"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </section>
+    </>
+  );
+}
+
+function LoyaltySkeleton() {
+  return (
+    <section className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-charcoal/40 p-6 shadow-soft backdrop-blur-xl">
+      <div className="h-3 w-16 animate-pulse rounded-full bg-white/10" />
+      <div className="mt-4 h-8 w-24 animate-pulse rounded-lg bg-white/10" />
+      <div className="mt-5 h-2 w-full animate-pulse rounded-full bg-white/5" />
+    </section>
+  );
+}
+
 
 function MenuAction({ icon: Icon, title, desc, onClick, color, badge }: any) {
   return (
