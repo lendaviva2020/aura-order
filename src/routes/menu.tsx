@@ -571,8 +571,25 @@ function CartDrawer({
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {BRL(l.item.price_cents)} cada
+                          {BRL(lineUnitCents(l))} cada
                         </div>
+                        {l.addons?.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {l.addons.map((a) => (
+                              <li
+                                key={a.id}
+                                className="flex justify-between text-[11px] text-muted-foreground"
+                              >
+                                <span>+ {a.name}</span>
+                                <span>{BRL(a.price_cents)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <NoteField
+                          productId={l.item.id}
+                          initial={l.note ?? ""}
+                        />
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
                             <button
@@ -599,6 +616,7 @@ function CartDrawer({
                 </ul>
               )}
             </div>
+            <UpsellStrip lines={lines} />
             <div className="border-t border-border bg-charcoal/40 px-6 py-5">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm uppercase tracking-widest text-muted-foreground">
