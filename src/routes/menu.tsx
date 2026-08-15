@@ -607,7 +607,7 @@ function CartDrawer({
                             </button>
                           </div>
                           <div className="font-display text-lg text-ember">
-                            {BRL(l.item.price_cents * l.qty)}
+                            {BRL(lineTotalCents(l))}
                           </div>
                         </div>
                       </div>
@@ -638,6 +638,104 @@ function CartDrawer({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function NoteField({ productId, initial }: { productId: string; initial: string }) {
+  const setNote = useCart((s) => s.setNote);
+  const [value, setValue] = useState(initial);
+
+  useEffect(() => {
+    const t = setTimeout(() => setNote(productId, value), 400);
+    return () => clearTimeout(t);
+  }, [value, productId, setNote]);
+
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      rows={2}
+      placeholder="Ex: sem cebola, ponto bem passado..."
+      className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-ember focus:outline-none"
+    />
+  );
+}
+
+function UpsellStrip({ lines }: { lines: CartLine[] }) {
+  const add = useCart((s) => s.add);
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").order("sort_order");
+      return data ?? [];
+    },
+  });
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("available", true)
+        .order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const catBySlug = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of categories ?? []) map[c.slug] = c.id;
+    return map;
+  }, [categories]);
+
+  const suggestions = useMemo(() => {
+    if (!products?.length || !categories?.length) return [];
+    const inCart = new Set(lines.map((l) => l.item.id));
+    const hasMain = lines.some((l) => l.item.category_id === catBySlug["burgers"]);
+    const hasDrink = lines.some((l) => l.item.category_id === catBySlug["drinks"]);
+    if (!hasMain || hasDrink) return [];
+
+    return products
+      .filter(
+        (p) =>
+          !inCart.has(p.id) &&
+          (p.category_id === catBySlug["sides"] || p.category_id === catBySlug["drinks"]),
+      )
+      .sort((a, b) =>
+        a.featured === b.featured ? a.sort_order - b.sort_order : a.featured ? -1 : 1,
+      )
+      .slice(0, 3);
+  }, [products, categories, catBySlug, lines]);
+
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div className="border-t border-border px-6 py-4">
+      <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+        Vai querer mais?
+      </h4>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+        {suggestions.map((p) => (
+          <div
+            key={p.id}
+            className="flex w-40 shrink-0 flex-col rounded-2xl border border-border bg-charcoal/50 p-3"
+          >
+            <div className="truncate text-sm font-semibold">{p.name}</div>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg text-ember">{BRL(p.price_cents)}</span>
+              <button
+                onClick={() => add(p, [])}
+                aria-label={`Adicionar ${p.name}`}
+                className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
