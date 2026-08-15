@@ -306,8 +306,139 @@ function MenuPage() {
   );
 }
 
-function ProductCard({ item, onAdd }: { item: CartItem; onAdd: () => void }) {
+function AddonSheet({
+  item,
+  addons,
+  onClose,
+  onConfirm,
+}: {
+  item: CartItem;
+  addons: Tables<"product_addons">[];
+  onClose: () => void;
+  onConfirm: (chosen: CartAddon[]) => void;
+}) {
+  const [selected, setSelected] = useState<Record<string, CartAddon>>({});
+  const chosen = useMemo(() => Object.values(selected), [selected]);
+  const totalCents =
+    item.price_cents + chosen.reduce((a, ad) => a + ad.price_cents, 0);
+
   return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 280 }}
+        className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background"
+      >
+        <div className="flex items-center justify-between border-b border-border px-6 py-5">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Personalize
+            </div>
+            <h3 className="font-display text-2xl">{item.name}</h3>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-charcoal">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <ul className="space-y-2 px-6 py-5">
+          {addons.map((a) => {
+            const active = !!selected[a.id];
+            return (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelected((s) => {
+                      const next = { ...s };
+                      if (next[a.id]) delete next[a.id];
+                      else
+                        next[a.id] = {
+                          id: a.id,
+                          name: a.name,
+                          price_cents: a.price_cents,
+                        };
+                      return next;
+                    })
+                  }
+                  className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${
+                    active
+                      ? "border-ember bg-ember/10"
+                      : "border-border bg-charcoal/50 hover:bg-charcoal"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span
+                      className={`grid h-5 w-5 place-items-center rounded-md border ${
+                        active ? "border-ember bg-ember" : "border-border"
+                      }`}
+                    >
+                      {active && (
+                        <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                      )}
+                    </span>
+                    <span className="font-semibold">{a.name}</span>
+                  </span>
+                  <span className="font-display text-lg text-ember">
+                    + {BRL(a.price_cents)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="sticky bottom-0 border-t border-border bg-background/95 px-6 py-5 backdrop-blur">
+          <button
+            onClick={() => onConfirm(chosen)}
+            className="w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember"
+          >
+            Adicionar · {BRL(totalCents)}
+          </button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+function ProductCard({
+  item,
+  addons,
+  onAdd,
+}: {
+  item: CartItem;
+  addons: Tables<"product_addons">[];
+  onAdd: (chosen: CartAddon[]) => void;
+}) {
+  const [addonOpen, setAddonOpen] = useState(false);
+
+  function handleAdd() {
+    if (addons.length > 0) setAddonOpen(true);
+    else onAdd([]);
+  }
+
+  return (
+    <>
+    <AnimatePresence>
+      {addonOpen && (
+        <AddonSheet
+          item={item}
+          addons={addons}
+          onClose={() => setAddonOpen(false)}
+          onConfirm={(chosen) => {
+            onAdd(chosen);
+            setAddonOpen(false);
+          }}
+        />
+      )}
+    </AnimatePresence>
     <motion.article
       layout
       initial={{ opacity: 0, y: 8 }}
