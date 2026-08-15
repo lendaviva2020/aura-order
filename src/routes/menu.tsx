@@ -20,7 +20,16 @@ import {
   Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useCart, type CartItem } from "@/lib/cart-store";
+import {
+  useCart,
+  cartSubtotalCents,
+  lineTotalCents,
+  lineUnitCents,
+  type CartItem,
+  type CartAddon,
+  type CartLine,
+} from "@/lib/cart-store";
+import type { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
