@@ -216,6 +216,7 @@ export type Database = {
       }
       order_items: {
         Row: {
+          addons_snapshot: Json
           created_at: string
           id: string
           name_snapshot: string
@@ -226,6 +227,7 @@ export type Database = {
           unit_price_cents: number
         }
         Insert: {
+          addons_snapshot?: Json
           created_at?: string
           id?: string
           name_snapshot: string
@@ -236,6 +238,7 @@ export type Database = {
           unit_price_cents: number
         }
         Update: {
+          addons_snapshot?: Json
           created_at?: string
           id?: string
           name_snapshot?: string
@@ -333,6 +336,47 @@ export type Database = {
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_addons: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          price_cents: number
+          product_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          price_cents: number
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          price_cents?: number
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_addons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]

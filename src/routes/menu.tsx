@@ -20,7 +20,16 @@ import {
   Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useCart, type CartItem } from "@/lib/cart-store";
+import {
+  useCart,
+  cartSubtotalCents,
+  lineTotalCents,
+  lineUnitCents,
+  type CartItem,
+  type CartAddon,
+  type CartLine,
+} from "@/lib/cart-store";
+import type { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -142,10 +151,27 @@ function MenuPage() {
   const clear = useCart((s) => s.clear);
   const linesArr = useMemo(() => Object.values(lines), [lines]);
   const count = useMemo(() => linesArr.reduce((a, l) => a + l.qty, 0), [linesArr]);
-  const subtotal = useMemo(
-    () => linesArr.reduce((a, l) => a + l.qty * (l.item.price_cents / 100), 0),
-    [linesArr],
-  );
+  const subtotalCents = useMemo(() => cartSubtotalCents(linesArr), [linesArr]);
+
+  const { data: addons } = useQuery({
+    queryKey: ["product_addons"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("product_addons")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const addonsByProduct = useMemo(() => {
+    const map: Record<string, Tables<"product_addons">[]> = {};
+    for (const a of addons ?? []) {
+      (map[a.product_id] ??= []).push(a);
+    }
+    return map;
+  }, [addons]);
 
   const filteredProducts = useMemo(
     () => products?.filter((p) => p.category_id === activeCatId) ?? [],
@@ -218,7 +244,12 @@ function MenuPage() {
         <motion.div layout className="grid gap-4">
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((item) => (
-              <ProductCard key={item.id} item={item} onAdd={() => add(item)} />
+              <ProductCard
+                key={item.id}
+                item={item}
+                addons={addonsByProduct[item.id] ?? []}
+                onAdd={(chosen) => add(item, chosen)}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -242,7 +273,7 @@ function MenuPage() {
               </div>
               <span className="font-bold uppercase tracking-wider">Ver carrinho</span>
             </div>
-            <span className="font-display text-xl">{BRL(subtotal * 100)}</span>
+            <span className="font-display text-xl">{BRL(subtotalCents)}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -258,7 +289,7 @@ function MenuPage() {
         {stage === "checkout" && (
           <CheckoutSheet
             tableData={tableData}
-            subtotalCents={subtotal * 100}
+            subtotalCents={subtotalCents}
             lines={linesArr}
             onClose={() => setStage("browsing")}
             onConfirm={(id) => {
@@ -275,8 +306,139 @@ function MenuPage() {
   );
 }
 
-function ProductCard({ item, onAdd }: { item: CartItem; onAdd: () => void }) {
+function AddonSheet({
+  item,
+  addons,
+  onClose,
+  onConfirm,
+}: {
+  item: CartItem;
+  addons: Tables<"product_addons">[];
+  onClose: () => void;
+  onConfirm: (chosen: CartAddon[]) => void;
+}) {
+  const [selected, setSelected] = useState<Record<string, CartAddon>>({});
+  const chosen = useMemo(() => Object.values(selected), [selected]);
+  const totalCents =
+    item.price_cents + chosen.reduce((a, ad) => a + ad.price_cents, 0);
+
   return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 280 }}
+        className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-3xl border-t border-border bg-background"
+      >
+        <div className="flex items-center justify-between border-b border-border px-6 py-5">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Personalize
+            </div>
+            <h3 className="font-display text-2xl">{item.name}</h3>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-charcoal">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <ul className="space-y-2 px-6 py-5">
+          {addons.map((a) => {
+            const active = !!selected[a.id];
+            return (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelected((s) => {
+                      const next = { ...s };
+                      if (next[a.id]) delete next[a.id];
+                      else
+                        next[a.id] = {
+                          id: a.id,
+                          name: a.name,
+                          price_cents: a.price_cents,
+                        };
+                      return next;
+                    })
+                  }
+                  className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${
+                    active
+                      ? "border-ember bg-ember/10"
+                      : "border-border bg-charcoal/50 hover:bg-charcoal"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span
+                      className={`grid h-5 w-5 place-items-center rounded-md border ${
+                        active ? "border-ember bg-ember" : "border-border"
+                      }`}
+                    >
+                      {active && (
+                        <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                      )}
+                    </span>
+                    <span className="font-semibold">{a.name}</span>
+                  </span>
+                  <span className="font-display text-lg text-ember">
+                    + {BRL(a.price_cents)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="sticky bottom-0 border-t border-border bg-background/95 px-6 py-5 backdrop-blur">
+          <button
+            onClick={() => onConfirm(chosen)}
+            className="w-full rounded-full bg-primary py-4 text-base font-bold uppercase tracking-wider text-primary-foreground shadow-ember"
+          >
+            Adicionar · {BRL(totalCents)}
+          </button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+function ProductCard({
+  item,
+  addons,
+  onAdd,
+}: {
+  item: CartItem;
+  addons: Tables<"product_addons">[];
+  onAdd: (chosen: CartAddon[]) => void;
+}) {
+  const [addonOpen, setAddonOpen] = useState(false);
+
+  function handleAdd() {
+    if (addons.length > 0) setAddonOpen(true);
+    else onAdd([]);
+  }
+
+  return (
+    <>
+    <AnimatePresence>
+      {addonOpen && (
+        <AddonSheet
+          item={item}
+          addons={addons}
+          onClose={() => setAddonOpen(false)}
+          onConfirm={(chosen) => {
+            onAdd(chosen);
+            setAddonOpen(false);
+          }}
+        />
+      )}
+    </AnimatePresence>
     <motion.article
       layout
       initial={{ opacity: 0, y: 8 }}
@@ -317,7 +479,7 @@ function ProductCard({ item, onAdd }: { item: CartItem; onAdd: () => void }) {
             {item.kcal && <span>{item.kcal} kcal</span>}
           </div>
           <button
-            onClick={onAdd}
+            onClick={handleAdd}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" /> Adicionar
@@ -325,6 +487,7 @@ function ProductCard({ item, onAdd }: { item: CartItem; onAdd: () => void }) {
         </div>
       </div>
     </motion.article>
+    </>
   );
 }
 
@@ -408,8 +571,25 @@ function CartDrawer({
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {BRL(l.item.price_cents)} cada
+                          {BRL(lineUnitCents(l))} cada
                         </div>
+                        {l.addons?.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {l.addons.map((a) => (
+                              <li
+                                key={a.id}
+                                className="flex justify-between text-[11px] text-muted-foreground"
+                              >
+                                <span>+ {a.name}</span>
+                                <span>{BRL(a.price_cents)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <NoteField
+                          productId={l.item.id}
+                          initial={l.note ?? ""}
+                        />
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-1 rounded-full border border-border">
                             <button
@@ -427,7 +607,7 @@ function CartDrawer({
                             </button>
                           </div>
                           <div className="font-display text-lg text-ember">
-                            {BRL(l.item.price_cents * l.qty)}
+                            {BRL(lineTotalCents(l))}
                           </div>
                         </div>
                       </div>
@@ -436,6 +616,7 @@ function CartDrawer({
                 </ul>
               )}
             </div>
+            <UpsellStrip lines={lines} />
             <div className="border-t border-border bg-charcoal/40 px-6 py-5">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm uppercase tracking-widest text-muted-foreground">
@@ -457,6 +638,104 @@ function CartDrawer({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function NoteField({ productId, initial }: { productId: string; initial: string }) {
+  const setNote = useCart((s) => s.setNote);
+  const [value, setValue] = useState(initial);
+
+  useEffect(() => {
+    const t = setTimeout(() => setNote(productId, value), 400);
+    return () => clearTimeout(t);
+  }, [value, productId, setNote]);
+
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      rows={2}
+      placeholder="Ex: sem cebola, ponto bem passado..."
+      className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-ember focus:outline-none"
+    />
+  );
+}
+
+function UpsellStrip({ lines }: { lines: CartLine[] }) {
+  const add = useCart((s) => s.add);
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").order("sort_order");
+      return data ?? [];
+    },
+  });
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("available", true)
+        .order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const catBySlug = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of categories ?? []) map[c.slug] = c.id;
+    return map;
+  }, [categories]);
+
+  const suggestions = useMemo(() => {
+    if (!products?.length || !categories?.length) return [];
+    const inCart = new Set(lines.map((l) => l.item.id));
+    const hasMain = lines.some((l) => l.item.category_id === catBySlug["burgers"]);
+    const hasDrink = lines.some((l) => l.item.category_id === catBySlug["drinks"]);
+    if (!hasMain || hasDrink) return [];
+
+    return products
+      .filter(
+        (p) =>
+          !inCart.has(p.id) &&
+          (p.category_id === catBySlug["sides"] || p.category_id === catBySlug["drinks"]),
+      )
+      .sort((a, b) =>
+        a.featured === b.featured ? a.sort_order - b.sort_order : a.featured ? -1 : 1,
+      )
+      .slice(0, 3);
+  }, [products, categories, catBySlug, lines]);
+
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div className="border-t border-border px-6 py-4">
+      <h4 className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+        Vai querer mais?
+      </h4>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+        {suggestions.map((p) => (
+          <div
+            key={p.id}
+            className="flex w-40 shrink-0 flex-col rounded-2xl border border-border bg-charcoal/50 p-3"
+          >
+            <div className="truncate text-sm font-semibold">{p.name}</div>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg text-ember">{BRL(p.price_cents)}</span>
+              <button
+                onClick={() => add(p, [])}
+                aria-label={`Adicionar ${p.name}`}
+                className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
