@@ -151,10 +151,27 @@ function MenuPage() {
   const clear = useCart((s) => s.clear);
   const linesArr = useMemo(() => Object.values(lines), [lines]);
   const count = useMemo(() => linesArr.reduce((a, l) => a + l.qty, 0), [linesArr]);
-  const subtotal = useMemo(
-    () => linesArr.reduce((a, l) => a + l.qty * (l.item.price_cents / 100), 0),
-    [linesArr],
-  );
+  const subtotalCents = useMemo(() => cartSubtotalCents(linesArr), [linesArr]);
+
+  const { data: addons } = useQuery({
+    queryKey: ["product_addons"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("product_addons")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const addonsByProduct = useMemo(() => {
+    const map: Record<string, Tables<"product_addons">[]> = {};
+    for (const a of addons ?? []) {
+      (map[a.product_id] ??= []).push(a);
+    }
+    return map;
+  }, [addons]);
 
   const filteredProducts = useMemo(
     () => products?.filter((p) => p.category_id === activeCatId) ?? [],
@@ -227,7 +244,12 @@ function MenuPage() {
         <motion.div layout className="grid gap-4">
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((item) => (
-              <ProductCard key={item.id} item={item} onAdd={() => add(item)} />
+              <ProductCard
+                key={item.id}
+                item={item}
+                addons={addonsByProduct[item.id] ?? []}
+                onAdd={(chosen) => add(item, chosen)}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -251,7 +273,7 @@ function MenuPage() {
               </div>
               <span className="font-bold uppercase tracking-wider">Ver carrinho</span>
             </div>
-            <span className="font-display text-xl">{BRL(subtotal * 100)}</span>
+            <span className="font-display text-xl">{BRL(subtotalCents)}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -267,7 +289,7 @@ function MenuPage() {
         {stage === "checkout" && (
           <CheckoutSheet
             tableData={tableData}
-            subtotalCents={subtotal * 100}
+            subtotalCents={subtotalCents}
             lines={linesArr}
             onClose={() => setStage("browsing")}
             onConfirm={(id) => {
