@@ -479,7 +479,7 @@ function ProductCard({
             {item.kcal && <span>{item.kcal} kcal</span>}
           </div>
           <button
-            onClick={onAdd}
+            onClick={handleAdd}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-ember transition hover:scale-105 active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" /> Adicionar
@@ -487,6 +487,7 @@ function ProductCard({
         </div>
       </div>
     </motion.article>
+    </>
   );
 }
 
