@@ -1001,7 +1001,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, order: any; onNew: () => void }) {
+function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number; order: Tables<"orders">; onNew: () => void }) {
   const statusSteps = [
     { id: "received", label: "Recebido", icon: ClipboardListIcon },
     { id: "preparing", label: "Na Cozinha", icon: ChefHat },
@@ -1010,6 +1010,23 @@ function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, ord
   ];
 
   const currentIdx = statusSteps.findIndex(s => s.id === order.status);
+
+  const [remainingMin, setRemainingMin] = useState<number | null>(null);
+  useEffect(() => {
+    if (!order.estimated_ready_at) {
+      setRemainingMin(null);
+      return;
+    }
+    const target = new Date(order.estimated_ready_at).getTime();
+    const update = () => setRemainingMin(Math.ceil((target - Date.now()) / 60000));
+    update();
+    const interval = setInterval(update, 30000);
+    return () => clearInterval(interval);
+  }, [order.estimated_ready_at]);
+
+  const isLate = remainingMin !== null && remainingMin <= 0;
+  const showEta = remainingMin !== null && !["ready", "delivering", "completed", "cancelled"].includes(order.status);
+
 
   return (
     <div className="min-h-screen bg-background px-6 py-12 text-center">
