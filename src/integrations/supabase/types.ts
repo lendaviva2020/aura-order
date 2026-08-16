@@ -272,12 +272,16 @@ export type Database = {
           coupon_id: string | null
           created_at: string
           customer_id: string | null
+          delivering_at: string | null
           discount_cents: number | null
+          estimated_ready_at: string | null
           id: string
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           placed_at: string
+          preparing_at: string | null
+          ready_at: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           table_id: string | null
@@ -291,12 +295,16 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          delivering_at?: string | null
           discount_cents?: number | null
+          estimated_ready_at?: string | null
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           placed_at?: string
+          preparing_at?: string | null
+          ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           table_id?: string | null
@@ -310,12 +318,16 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          delivering_at?: string | null
           discount_cents?: number | null
+          estimated_ready_at?: string | null
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           placed_at?: string
+          preparing_at?: string | null
+          ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           table_id?: string | null

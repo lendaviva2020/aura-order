@@ -186,15 +186,18 @@ function OrdersGrid({
 function OrderCard({ order, view }: { order: any; view: ViewType }) {
   const [elapsed, setElapsed] = useState(0);
 
+  const anchor =
+    order.status === "preparing" && order.preparing_at ? order.preparing_at : order.placed_at;
+
   useEffect(() => {
     const update = () => {
-      const diff = Math.floor((Date.now() - new Date(order.placed_at).getTime()) / 60000);
+      const diff = Math.floor((Date.now() - new Date(anchor).getTime()) / 60000);
       setElapsed(diff);
     };
     update();
     const interval = setInterval(update, 30000);
     return () => clearInterval(interval);
-  }, [order.placed_at]);
+  }, [anchor]);
 
   const priorityColor = elapsed > 15 ? "border-red-500 bg-red-500/10" : elapsed > 8 ? "border-amber-500 bg-amber-500/10" : "border-border bg-charcoal/40";
   const statusLabel = {
@@ -205,13 +208,14 @@ function OrderCard({ order, view }: { order: any; view: ViewType }) {
   }[order.status as string];
 
   async function nextStatus() {
-    let next: string = "completed";
+    let next: OrderStatus = "completed";
     if (order.status === "received") next = "preparing";
     else if (order.status === "preparing") next = "ready";
     else if (order.status === "ready") next = "delivering";
     else if (order.status === "delivering") next = "completed";
 
-    const { error } = await supabase.from("orders").update({ status: next as any }).eq("id", order.id);
+    const { error } = await supabase.from("orders").update({ status: next }).eq("id", order.id);
+
     if (error) toast.error("Falha ao atualizar status");
     else toast.success(`Pedido ${order.code} movido para ${next}`);
   }

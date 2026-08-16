@@ -801,6 +801,14 @@ function CheckoutSheet({
     setPaying(true);
     try {
       // 1. Create order
+      const prepMinutes = Math.max(
+        0,
+        ...lines.map((l) => l.item.prep_minutes ?? 0),
+      );
+      const estimatedReadyAt = new Date(
+        Date.now() + (prepMinutes > 0 ? prepMinutes : 10) * 60_000,
+      ).toISOString();
+
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         table_id: tableData?.id,
         customer_id: user?.id || null,
@@ -811,7 +819,9 @@ function CheckoutSheet({
         payment_method: method,
         status: "received",
         coupon_id: coupon?.id || null,
+        estimated_ready_at: estimatedReadyAt,
       }).select().single();
+
 
       if (orderErr) throw orderErr;
 
@@ -991,7 +1001,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, order: any; onNew: () => void }) {
+function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number; order: Tables<"orders">; onNew: () => void }) {
   const statusSteps = [
     { id: "received", label: "Recebido", icon: ClipboardListIcon },
     { id: "preparing", label: "Na Cozinha", icon: ChefHat },
@@ -1000,6 +1010,23 @@ function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, ord
   ];
 
   const currentIdx = statusSteps.findIndex(s => s.id === order.status);
+
+  const [remainingMin, setRemainingMin] = useState<number | null>(null);
+  useEffect(() => {
+    if (!order.estimated_ready_at) {
+      setRemainingMin(null);
+      return;
+    }
+    const target = new Date(order.estimated_ready_at).getTime();
+    const update = () => setRemainingMin(Math.ceil((target - Date.now()) / 60000));
+    update();
+    const interval = setInterval(update, 30000);
+    return () => clearInterval(interval);
+  }, [order.estimated_ready_at]);
+
+  const isLate = remainingMin !== null && remainingMin <= 0;
+  const showEta = remainingMin !== null && !["ready", "delivering", "completed", "cancelled"].includes(order.status);
+
 
   return (
     <div className="min-h-screen bg-background px-6 py-12 text-center">
@@ -1036,8 +1063,26 @@ function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number, ord
                   <div className={`text-sm font-bold uppercase tracking-widest ${isDone || isCurrent ? "text-foreground" : "text-muted-foreground"}`}>
                     {step.label}
                   </div>
-                  {isCurrent && <div className="text-xs text-ember">Aguarde um momento...</div>}
+                  {isCurrent && (
+                    <>
+                      <div className="text-xs text-ember">Aguarde um momento...</div>
+                      {showEta && (
+                        isLate ? (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                            <AlertCircle className="h-3 w-3" />
+                            Está demorando um pouco mais que o esperado — já avisamos a cozinha
+                          </div>
+                        ) : (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                            <Timer className="h-3 w-3 text-ember" />
+                            Pronto em ~{remainingMin} min
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
                 </div>
+
               </div>
             );
           })}

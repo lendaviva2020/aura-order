@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.stamp_order_status_transition() FROM PUBLIC, anon, authenticated;
