@@ -745,7 +745,7 @@ function CheckoutSheet({
 }: {
   tableData: any;
   subtotalCents: number;
-  lines: any[];
+  lines: CartLine[];
   onClose: () => void;
   onConfirm: (id: string) => void;
 }) {
