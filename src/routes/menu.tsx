@@ -801,6 +801,14 @@ function CheckoutSheet({
     setPaying(true);
     try {
       // 1. Create order
+      const prepMinutes = Math.max(
+        0,
+        ...lines.map((l) => l.item.prep_minutes ?? 0),
+      );
+      const estimatedReadyAt = new Date(
+        Date.now() + (prepMinutes > 0 ? prepMinutes : 10) * 60_000,
+      ).toISOString();
+
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         table_id: tableData?.id,
         customer_id: user?.id || null,
@@ -811,7 +819,9 @@ function CheckoutSheet({
         payment_method: method,
         status: "received",
         coupon_id: coupon?.id || null,
+        estimated_ready_at: estimatedReadyAt,
       }).select().single();
+
 
       if (orderErr) throw orderErr;
 
