@@ -1063,8 +1063,26 @@ function OrderTracking({ tableNumber, order, onNew }: { tableNumber: number; ord
                   <div className={`text-sm font-bold uppercase tracking-widest ${isDone || isCurrent ? "text-foreground" : "text-muted-foreground"}`}>
                     {step.label}
                   </div>
-                  {isCurrent && <div className="text-xs text-ember">Aguarde um momento...</div>}
+                  {isCurrent && (
+                    <>
+                      <div className="text-xs text-ember">Aguarde um momento...</div>
+                      {showEta && (
+                        isLate ? (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                            <AlertCircle className="h-3 w-3" />
+                            Está demorando um pouco mais que o esperado — já avisamos a cozinha
+                          </div>
+                        ) : (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                            <Timer className="h-3 w-3 text-ember" />
+                            Pronto em ~{remainingMin} min
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
                 </div>
+
               </div>
             );
           })}
