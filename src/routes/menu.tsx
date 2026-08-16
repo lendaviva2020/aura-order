@@ -506,10 +506,7 @@ function CartDrawer({
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
   const lines = useMemo(() => Object.values(linesMap), [linesMap]);
-  const subtotalCents = useMemo(
-    () => lines.reduce((a, l) => a + l.qty * l.item.price_cents, 0),
-    [lines],
-  );
+  const subtotalCents = useMemo(() => cartSubtotalCents(lines), [lines]);
 
   return (
     <AnimatePresence>
@@ -748,7 +745,7 @@ function CheckoutSheet({
 }: {
   tableData: any;
   subtotalCents: number;
-  lines: any[];
+  lines: CartLine[];
   onClose: () => void;
   onConfirm: (id: string) => void;
 }) {
@@ -824,7 +821,13 @@ function CheckoutSheet({
         product_id: l.item.id,
         name_snapshot: l.item.name,
         qty: l.qty,
-        unit_price_cents: l.item.price_cents,
+        unit_price_cents: lineUnitCents(l),
+        notes: l.note ?? null,
+        addons_snapshot: (l.addons ?? []).map((a) => ({
+          id: a.id,
+          name: a.name,
+          price_cents: a.price_cents,
+        })),
       }));
 
       const { error: itemsErr } = await supabase.from("order_items").insert(items);
@@ -891,8 +894,18 @@ function CheckoutSheet({
                 <div key={l.item.id} className="flex justify-between text-sm">
                   <span>
                     <span className="font-bold text-ember">{l.qty}×</span> {l.item.name}
+                    {l.addons?.length > 0 && (
+                      <span className="block text-xs text-muted-foreground">
+                        {l.addons.map((a) => `+ ${a.name}`).join(", ")}
+                      </span>
+                    )}
+                    {l.note && (
+                      <span className="block text-xs italic text-muted-foreground">
+                        “{l.note}”
+                      </span>
+                    )}
                   </span>
-                  <span>{BRL(l.item.price_cents * l.qty)}</span>
+                  <span>{BRL(lineTotalCents(l))}</span>
                 </div>
               ))}
               <div className="my-2 h-px bg-border" />
